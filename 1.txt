@@ -1,0 +1,3 @@
+ 同一個『功能』中需要多次接收的意思是???
+一般而言，當你的Linebot收到用戶傳來的訊息，如果是單一文字訊息，則你的WebHook會收到一則JSON，其中就包含一個event.message.text，如果你的Linebot在短時間內收到大量訊息，
+則會同時收到多個event，一個event當中依舊是包含一個message﹐該message若是純文字，則text屬性將可取得該(用戶傳給Line bot的)文字。
