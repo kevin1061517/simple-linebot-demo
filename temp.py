@@ -373,7 +373,7 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token,image_message)
         return
     else:
-        reword = ['安靜啦 乾','去找你妹','請問沛?','不要跟我耍嘴砲','在嘴阿','小楊是育成高中','我覺得有道理','你在說泰語','別靠北','在嗆阿','你在恭殺小啦','怎樣?','請注意你說話','高潮你妹啦','在說人話嗎?','管你?','你知道林北是誰嗎','閉嘴']
+        reword = ['安靜啦 乾','去找你妹','請問沛最近好嗎?','不要跟我耍嘴砲','在嘴阿','小楊是育成高中','我覺得有道理','你在說泰語','別靠北','在嗆阿','你在恭殺小啦','怎樣?','請注意你說話','高潮你妹啦','在說人話嗎?','管你?','你知道林北是誰嗎','閉嘴']
         r = random.randint(0,17)
         t =  quote(reword[r])
         stream_url = 'https://google-translate-proxy.herokuapp.com/api/tts?query='+t+'&language=zh-tw'
