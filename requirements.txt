@@ -1,0 +1,8 @@
+beautifulsoup4
+Flask
+line-bot-sdk
+python-firebase
+config
+imgurpython
+SpeechRecognition
+pydub
