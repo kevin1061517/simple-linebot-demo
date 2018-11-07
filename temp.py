@@ -274,8 +274,7 @@ def imagemap(event,text):
                                )
                    ]
             )
-    line_bot_api.reply_message(event.reply_token, message)
-    
+            line_bot_api.reply_message(event.reply_token,TextSendMessage(text='Hello, world')
 #處理音訊
 from pydub import AudioSegment
 import speech_recognition as sr
@@ -378,6 +377,7 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, image)
         return
     elif imagemap(event,event.message.text)!=None:
+        
         return
     elif bug(event.message.text)!=None:
         content = bug(event.message.text)
