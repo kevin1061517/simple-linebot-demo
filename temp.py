@@ -389,20 +389,20 @@ def handle_message(event):
         content = get(event.message.text,tem_name)
     elif event.message.text == "位置2":
         imagemap_message = ImagemapSendMessage(
-                        base_url='https://tw.dictionary.search.yahoo.com/search;_ylt=AwrtXG83GOBbIlQAgAd9rolQ;_ylu=X3oDMTBvYjg4OHI4BGNvbG8DBHBvcwMxBHZ0aWQDBHNlYwNzYw--?p=senior&ei=UTF-8',
+                        base_url='https://i.imgur.com/M7R0Enu.jpg',
                         alt_text='this is an imagemap',
-                        base_size=BaseSize(height=520, width=520),
+                        base_size=BaseSize(height=1040, width=1040),
                         actions=[
                             URIImagemapAction(
                                 link_uri='https://i.imgur.com/M7R0Enu.jpg',
                                 area=ImagemapArea(
-                                    x=174, y=65, width=707, height=416
+                                    x=0, y=0, width=520, height=1040
                                 )
                             ),
                             MessageImagemapAction(
                                 text='hello',
                                 area=ImagemapArea(
-                                    x=520, y=0, width=520, height=520
+                                    x=520, y=0, width=520, height=1040
                                 )
                             )
                         ]
