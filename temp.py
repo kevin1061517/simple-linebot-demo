@@ -7,7 +7,7 @@ from linebot.exceptions import (
 )
 from firebase import firebase
 from linebot.models import (
-    TemplateSendMessage,AudioMessage,AudioSendMessage,ButtonsTemplate,ImageMessage,URITemplateAction,MessageTemplateAction,ConfirmTemplate,PostbackTemplateAction,ImageSendMessage,MessageEvent, TextMessage, TextSendMessage,StickerMessage, StickerSendMessage
+    TemplateSendMessage,AudioMessage,AudioSendMessage,BaseSize,ImagemapArea,URIImagemapAction,MessageImagemapAction,ImagemapSendMessage,ButtonsTemplate,ImageMessage,URITemplateAction,MessageTemplateAction,ConfirmTemplate,PostbackTemplateAction,ImageSendMessage,MessageEvent, TextMessage, TextSendMessage,StickerMessage, StickerSendMessage
 )
 from imgurpython import ImgurClient
 from config import *
@@ -44,16 +44,16 @@ def callback():
     except InvalidSignatureError:
         abort(400)
     return 'OK'
-#@app.route('/cuu_test')#輸入網頁{https://robotyung.herokuapp.com/cuu_test就會發出訊息
-#def display():
-#    temp_set = save_line_id('U728ffb2ce052577e6165dfc60d5b0dc0')#取得所有要推播訊息的userid
-#    for v in temp_set:
-#        if(app_send()=='投票'):
-#            push_msg(v)
-#        else:
-#            line_bot_api.push_message(v, TextSendMessage(text=app_send()))
-#            #line_bot_api.push_message(v, TextSendMessage(text='如有看到訊息請回ok或好\n表示你收到有意見就直接回'))
-#    return 'hello'
+@app.route('/cuu_test')#輸入網頁{https://robotyung.herokuapp.com/cuu_test就會發出訊息
+def display():
+    temp_set = save_line_id('U728ffb2ce052577e6165dfc60d5b0dc0')#取得所有要推播訊息的userid
+    for v in temp_set:
+        if(app_send()=='投票'):
+            push_msg(v)
+        else:
+            line_bot_api.push_message(v, TextSendMessage(text=app_send()))
+            #line_bot_api.push_message(v, TextSendMessage(text='如有看到訊息請回ok或好\n表示你收到有意見就直接回'))
+    return 'hello'
 def bug(text):
     url = 'http://www.mis.ccu.edu.tw:8088/faculty_chi.aspx#AdjunctProfessor'
     html = requests.get(url)
@@ -251,6 +251,31 @@ def check_pic(img_id):
     )
     )
     return Confirm_template
+def imagemap(event,text):
+    patterns = ['bye','掰','再見']
+    for pattern in patterns:
+        if re.search(pattern,text.lower()):
+            message = ImagemapSendMessage(
+            base_url='https://www.youtube.com/watch?v=3QHxNGB7Q0s',
+            alt_text='this is an imagemap',
+            base_size=BaseSize(height=1040, width=1040),
+            actions=[
+                    URIImagemapAction(
+                            link_uri='https://i.imgur.com/M7R0Enu.jpg',
+                            area=ImagemapArea(
+                                x=0, y=0, width=520, height=1040
+                            )
+                    ),
+                    MessageImagemapAction(
+                            text='hello',
+                            area=ImagemapArea(
+                                x=520, y=0, width=520, height=1040
+                            )
+                    )
+            ]
+            )
+    line_bot_api.reply_message(event.reply_token, message)
+    
 #處理音訊
 from pydub import AudioSegment
 import speech_recognition as sr
@@ -351,6 +376,8 @@ def handle_message(event):
     elif get_image(event.message.text)!=None:
         image = get_image(event.message.text)
         line_bot_api.reply_message(event.reply_token, image)
+        return
+    elif imagemap(event,event.message.text)!=None:
         return
     elif bug(event.message.text)!=None:
         content = bug(event.message.text)
