@@ -26,8 +26,8 @@ refresh_token = 'd75aaee1c138c25144b6719f4e7e169f36758c50'
 client = ImgurClient(client_id, client_secret, access_token, refresh_token)
 static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 #老師id-->U055f980c2a280233a6342e8132099b1a
-line_bot_api = LineBotApi('bwmJ/LHk/3b24RrXtlw8Nt4bi4AMsQyHMjtzrmX/++vLD8BYjxgLJXvX/V/fk2KzVp2N98T+Eck8GjhuatgntO7Ne30Y/Hzq1ef5oo2CZH6Er8y/h6sSwR9GVWE/4CYtXdp039tsFxFuyxwyfn31tQdB04t89/1O/w1cDnyilFU=')
-handler = WebhookHandler('2046aa465907c29654b2fde963b1ebe3')
+line_bot_api = LineBotApi('3xmkcHdxeFREm5d7X0YtBS5sdZS5J/XvwYAUf2XS5hcs0+LS2v+x1DMTorheXcddfL0GKgwb+of87nujHWkfWehHKtH469+UGGMbyFo+0Fzppar85P6gTt+aNsqVSmOjCUIZn8IaxQYdfJVEj+1UhAdB04t89/1O/w1cDnyilFU=')
+handler = WebhookHandler('04cc956e1800201b2005c5228958488d')
 url = 'https://line-bot-by-python.firebaseio.com'
 fb = firebase.FirebaseApplication(url,None)
 @app.route('/cuu_test')#輸入網頁{https://robotyung.herokuapp.com/cuu_test就會發出訊息
