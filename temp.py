@@ -30,17 +30,7 @@ line_bot_api = LineBotApi('3xmkcHdxeFREm5d7X0YtBS5sdZS5J/XvwYAUf2XS5hcs0+LS2v+x1
 handler = WebhookHandler('04cc956e1800201b2005c5228958488d')
 url = 'https://line-bot-by-python.firebaseio.com'
 fb = firebase.FirebaseApplication(url,None)
-@app.route('/cuu_test')#輸入網頁{https://robotyung.herokuapp.com/cuu_test就會發出訊息
-def display():
-    temp_set = save_line_id('U728ffb2ce052577e6165dfc60d5b0dc0')#取得所有要推播訊息的userid
-    for v in temp_set:
-        if(app_send()=='投票'):
-            push_msg(v)
-        else:
-            line_bot_api.push_message(v, TextSendMessage(text=app_send()))
-            #line_bot_api.push_message(v, TextSendMessage(text='如有看到訊息請回ok或好\n表示你收到有意見就直接回'))
-    
-    return 'hello'
+
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
@@ -54,7 +44,16 @@ def callback():
     except InvalidSignatureError:
         abort(400)
     return 'OK'
-
+#@app.route('/cuu_test')#輸入網頁{https://robotyung.herokuapp.com/cuu_test就會發出訊息
+#def display():
+#    temp_set = save_line_id('U728ffb2ce052577e6165dfc60d5b0dc0')#取得所有要推播訊息的userid
+#    for v in temp_set:
+#        if(app_send()=='投票'):
+#            push_msg(v)
+#        else:
+#            line_bot_api.push_message(v, TextSendMessage(text=app_send()))
+#            #line_bot_api.push_message(v, TextSendMessage(text='如有看到訊息請回ok或好\n表示你收到有意見就直接回'))
+#    return 'hello'
 def bug(text):
     url = 'http://www.mis.ccu.edu.tw:8088/faculty_chi.aspx#AdjunctProfessor'
     html = requests.get(url)
