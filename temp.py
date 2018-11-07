@@ -387,6 +387,29 @@ def handle_message(event):
         content = fbchoose(event.message.text)
     elif get(event.message.text,tem_name)!=None:
         content = get(event.message.text,tem_name)
+    elif event.message.text == "位置2":
+        imagemap_message = ImagemapSendMessage(
+                        base_url='',
+                        alt_text='this is an imagemap',
+                        base_size=BaseSize(height=520, width=520),
+                        actions=[
+                            URIImagemapAction(
+                                link_uri='',
+                                area=ImagemapArea(
+                                    x=174, y=65, width=707, height=416
+                                )
+                            ),
+                            MessageImagemapAction(
+                                text='hello',
+                                area=ImagemapArea(
+                                    x=520, y=0, width=520, height=520
+                                )
+                            )
+                        ]
+                    )
+        line_bot_api.reply_message(event.reply_token,imagemap_message)
+    
+    
     elif event.message.text == "隨便一張":
         client = ImgurClient(client_id, client_secret)
         images = client.get_album_images(album_id)
