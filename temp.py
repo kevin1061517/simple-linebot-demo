@@ -251,30 +251,30 @@ def check_pic(img_id):
     )
     )
     return Confirm_template
-def imagemap(event,text):
-    patterns = ['bye','掰','再見']
-    for pattern in patterns:
-        if re.search(pattern,text.lower()):
-            message = ImagemapSendMessage(
-                    base_url='https://www.youtube.com/watch?v=3QHxNGB7Q0s',
-                    alt_text='this is an imagemap',
-                    base_size=BaseSize(height=1040, width=1040),
-                    actions=[
-                            URIImagemapAction(
-                                    link_uri='https://i.imgur.com/M7R0Enu.jpg',
-                                    area=ImagemapArea(
-                                            x=0, y=0, width=520, height=1040
-                                )
-                                ),
-                                MessageImagemapAction(
-                                        text='hello',
-                                        area=ImagemapArea(
-                                            x=520, y=0, width=520, height=1040
-                                         )
-                               )
-                   ]
-            )
-            line_bot_api.reply_message(event.reply_token,TextSendMessage(text='Hello, world')
+#def imagemap(event,text):
+#    patterns = ['bye','掰','再見']
+#    for pattern in patterns:
+#        if re.search(pattern,text.lower()):
+#            message = ImagemapSendMessage(
+#                    base_url='https://www.youtube.com/watch?v=3QHxNGB7Q0s',
+#                    alt_text='this is an imagemap',
+#                    base_size=BaseSize(height=1040, width=1040),
+#                    actions=[
+#                            URIImagemapAction(
+#                                    link_uri='https://i.imgur.com/M7R0Enu.jpg',
+#                                    area=ImagemapArea(
+#                                            x=0, y=0, width=520, height=1040
+#                                )
+#                                ),
+#                                MessageImagemapAction(
+#                                        text='hello',
+#                                        area=ImagemapArea(
+#                                            x=520, y=0, width=520, height=1040
+#                                         )
+#                               )
+#                   ]
+#            )
+#            line_bot_api.reply_message(event.reply_token,TextSendMessage(text='Hello, world')
 #處理音訊
 from pydub import AudioSegment
 import speech_recognition as sr
@@ -376,9 +376,9 @@ def handle_message(event):
         image = get_image(event.message.text)
         line_bot_api.reply_message(event.reply_token, image)
         return
-    elif imagemap(event,event.message.text)!=None:
-        
-        return
+#    elif imagemap(event,event.message.text)!=None:
+#        
+#        return
     elif bug(event.message.text)!=None:
         content = bug(event.message.text)
     elif content =='lab':
