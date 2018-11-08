@@ -404,6 +404,12 @@ def handle_message(event):
                                 area=ImagemapArea(
                                     x=260, y=220, width=260, height=220
                                 )
+                            ),
+                            MessageImagemapAction(
+                                text='bye',
+                                area=ImagemapArea(
+                                    x=260, y=0, width=260, height=220
+                                )
                             )
                         ]
                     )
