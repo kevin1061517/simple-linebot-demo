@@ -275,41 +275,41 @@ def check_pic(img_id):
 #                   ]
 #            )
 #            line_bot_api.reply_message(event.reply_token,TextSendMessage(text='Hello, world')
-#處理音訊
-from pydub import AudioSegment
-import speech_recognition as sr
-@handler.add(MessageEvent,message=AudioMessage)
-def handle_aud(event):
-    r = sr.Recognizer()
-    message_content = line_bot_api.get_message_content(event.message.id)
-    ext = 'aac'
-    try:
-        with tempfile.NamedTemporaryFile(prefix=ext + '-', delete=False) as tf:
-            for chunk in message_content.iter_content():
-                tf.write(chunk)
-            tempfile_path = tf.name
-        dist_path = tempfile_path + '.' + ext
-        
-        test = 'out'
-        
-        AudioSegment.converter = '/app/.heroku/vendor/ffmpeg/bin/ffmpeg'
-        sound = AudioSegment.from_file(dist_path, format="aac")
-        dist_path = os.path.splitext(dist_path)[0]+'.mp3'
-        sound.export(dist_path, format="mp3")
-        test = 'in'
+##處理音訊
+#from pydub import AudioSegment
+#import speech_recognition as sr
+#@handler.add(MessageEvent,message=AudioMessage)
+#def handle_aud(event):
+#    r = sr.Recognizer()
+#    message_content = line_bot_api.get_message_content(event.message.id)
+#    ext = 'aac'
+#    try:
+#        with tempfile.NamedTemporaryFile(prefix=ext + '-', delete=False) as tf:
+#            for chunk in message_content.iter_content():
+#                tf.write(chunk)
+#            tempfile_path = tf.name
+#        dist_path = tempfile_path + '.' + ext
 #        
-        dist_name = os.path.basename(dist_path)
-        os.rename(tempfile_path,dist_path)
-        test = 'in'
-        path = os.path.join('/tmp', dist_name)
-        with sr.AudioFile(path) as source:
-            audio = r.record(source)
-    except:
-        t = '音訊有問題'+test
-        line_bot_api.reply_message(event.reply_token,TextSendMessage(text=t))
-    os.remove(path)
-    text = r.recognize_google(audio,language='zh-TW')
-    line_bot_api.reply_message(event.reply_token,TextSendMessage(text='你的訊息是=\n'+text))
+#        test = 'out'
+#        
+#        AudioSegment.converter = '/app/.heroku/vendor/ffmpeg/bin/ffmpeg'
+#        sound = AudioSegment.from_file(dist_path, format="aac")
+#        dist_path = os.path.splitext(dist_path)[0]+'.mp3'
+#        sound.export(dist_path, format="mp3")
+#        test = 'in'
+##        
+#        dist_name = os.path.basename(dist_path)
+#        os.rename(tempfile_path,dist_path)
+#        test = 'in'
+#        path = os.path.join('/tmp', dist_name)
+#        with sr.AudioFile(path) as source:
+#            audio = r.record(source)
+#    except:
+#        t = '音訊有問題'+test
+#        line_bot_api.reply_message(event.reply_token,TextSendMessage(text=t))
+#    os.remove(path)
+#    text = r.recognize_google(audio,language='zh-TW')
+#    line_bot_api.reply_message(event.reply_token,TextSendMessage(text='你的訊息是=\n'+text))
 #處理圖片
 @handler.add(MessageEvent,message=ImageMessage)
 def handle_msg(event):
@@ -391,24 +391,24 @@ def handle_message(event):
         imagemap_message = ImagemapSendMessage(
                         base_url='https://i.imgur.com/PJlGQ2v.jpg',
                         alt_text='this is an imagemap',
-                        base_size=BaseSize(height=520, width=420),
+                        base_size=BaseSize(height=260, width=220),
                         actions=[
                             URIImagemapAction(
                                 link_uri='https://youtu.be/mi4ZEqNWzCE',
                                 area=ImagemapArea(
-                                    x=0, y=0, width=260, height=220
+                                    x=0, y=0, width=130, height=110
                                 )
                             ),
                             MessageImagemapAction(
                                 text='右下',
                                 area=ImagemapArea(
-                                    x=260, y=220, width=260, height=220
+                                    x=130, y=110, width=130, height=110
                                 )
                             ),
                             MessageImagemapAction(
                                 text='右上',
                                 area=ImagemapArea(
-                                    x=260, y=0, width=260, height=220
+                                    x=130, y=0, width=130, height=110
                                 )
                             )
                         ]
