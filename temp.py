@@ -275,7 +275,7 @@ def check_pic(img_id):
 #                   ]
 #            )
 #            line_bot_api.reply_message(event.reply_token,TextSendMessage(text='Hello, world')
-##處理音訊
+#處理音訊
 #from pydub import AudioSegment
 #import speech_recognition as sr
 #@handler.add(MessageEvent,message=AudioMessage)
@@ -391,24 +391,24 @@ def handle_message(event):
         imagemap_message = ImagemapSendMessage(
                         base_url='https://i.imgur.com/PJlGQ2v.jpg',
                         alt_text='this is an imagemap',
-                        base_size=BaseSize(height=260, width=220),
+                        base_size=BaseSize(height=1040, width=840),
                         actions=[
                             URIImagemapAction(
                                 link_uri='https://youtu.be/mi4ZEqNWzCE',
                                 area=ImagemapArea(
-                                    x=0, y=0, width=130, height=110
+                                    x=0, y=0, width=520, height=440
                                 )
                             ),
                             MessageImagemapAction(
                                 text='右下',
                                 area=ImagemapArea(
-                                    x=130, y=110, width=130, height=110
+                                    x=520, y=440, width=520, height=440
                                 )
                             ),
                             MessageImagemapAction(
                                 text='右上',
                                 area=ImagemapArea(
-                                    x=130, y=0, width=130, height=110
+                                   x=520, y=0, width=520, height=440
                                 )
                             )
                         ]
