@@ -389,20 +389,20 @@ def handle_message(event):
         content = get(event.message.text,tem_name)
     elif event.message.text == "位置2":
         imagemap_message = ImagemapSendMessage(
-                        base_url='https://i.imgur.com/M7R0Enu.jpg',
+                        base_url='https://i.imgur.com/xGdQD6T.jpg',
                         alt_text='this is an imagemap',
-                        base_size=BaseSize(height=1040, width=1040),
+                        base_size=BaseSize(height=520, width=520),
                         actions=[
                             URIImagemapAction(
-                                link_uri='https://i.imgur.com/M7R0Enu.jpg',
+                                link_uri='https://youtu.be/mi4ZEqNWzCE',
                                 area=ImagemapArea(
-                                    x=0, y=0, width=520, height=1040
+                                    x=0, y=0, width=260, height=260
                                 )
                             ),
                             MessageImagemapAction(
                                 text='hello',
                                 area=ImagemapArea(
-                                    x=520, y=0, width=520, height=1040
+                                    x=int(1040*0.8), y=0, width=int(1040/5), height=1040
                                 )
                             )
                         ]
