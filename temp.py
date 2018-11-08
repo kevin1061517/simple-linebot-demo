@@ -389,7 +389,7 @@ def handle_message(event):
         content = get(event.message.text,tem_name)
     elif event.message.text == "girl":
         imagemap_message = ImagemapSendMessage(
-                        base_url='https://i.imgur.com/PJlGQ2v.jpg',
+                        base_url='https://i.imgur.com/SN2GVbp.jpg',
                         alt_text='this is an imagemap',
                         base_size=BaseSize(height=520, width=420),
                         actions=[
