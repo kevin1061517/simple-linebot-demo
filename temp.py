@@ -391,24 +391,24 @@ def handle_message(event):
         imagemap_message = ImagemapSendMessage(
                         base_url='https://i.imgur.com/PJlGQ2v.jpg',
                         alt_text='this is an imagemap',
-                        base_size=BaseSize(height=1040, width=840),
+                        base_size=BaseSize(height=520, width=420),
                         actions=[
                             URIImagemapAction(
                                 link_uri='https://youtu.be/mi4ZEqNWzCE',
                                 area=ImagemapArea(
-                                    x=0, y=0, width=520, height=440
+                                    x=0, y=0, width=260, height=220
                                 )
                             ),
                             MessageImagemapAction(
                                 text='右下',
                                 area=ImagemapArea(
-                                    x=520, y=440, width=520, height=440
+                                    x=260, y=220, width=260, height=220
                                 )
                             ),
                             MessageImagemapAction(
                                 text='右上',
                                 area=ImagemapArea(
-                                   x=520, y=0, width=520, height=440
+                                    x=260, y=0, width=260, height=220
                                 )
                             )
                         ]
