@@ -1,13 +1,19 @@
+#fang_test herokuapp
 from flask import Flask, request, abort
 from linebot import (
     LineBotApi, WebhookHandler
 )
 from linebot.exceptions import (
-    InvalidSignatureError
+    LineBotApiError, InvalidSignatureError
 )
 from firebase import firebase
 from linebot.models import (
-    TemplateSendMessage,AudioMessage,AudioSendMessage,BaseSize,ImagemapArea,URIImagemapAction,MessageImagemapAction,ImagemapSendMessage,ButtonsTemplate,ImageMessage,URITemplateAction,MessageTemplateAction,ConfirmTemplate,PostbackTemplateAction,ImageSendMessage,MessageEvent, TextMessage, TextSendMessage,StickerMessage, StickerSendMessage
+    SourceUser,SourceGroup,SourceRoom,LeaveEvent,JoinEvent,
+    TemplateSendMessage,PostbackEvent,AudioMessage,LocationMessage,
+    ButtonsTemplate,LocationSendMessage,AudioSendMessage,ButtonsTemplate,
+    ImageMessage,URITemplateAction,MessageTemplateAction,ConfirmTemplate,
+    PostbackTemplateAction,ImageSendMessage,MessageEvent, TextMessage, 
+    TextSendMessage,StickerMessage, StickerSendMessage,DatetimePickerTemplateAction
 )
 from imgurpython import ImgurClient
 from config import *
@@ -18,19 +24,36 @@ import random
 import os,tempfile
 app = Flask(__name__)
 #imgur上傳照片
-client_id = '6255d5f00adb13c'
-client_secret = '42e6189ab784cc81f1daff96a09873ea225a2d62'
-album_id = '5P2TA2e'
-access_token = '11814d667925db5f085baee3f423554963eaeab8'
-refresh_token = 'd75aaee1c138c25144b6719f4e7e169f36758c50'
+client_id = os.getenv('client_id',None)
+client_secret = os.getenv('client_secret',None)
+album_id = os.getenv('album_id',None)
+access_token = os.getenv('access_token',None)
+refresh_token = os.getenv('refresh_token',None)
 client = ImgurClient(client_id, client_secret, access_token, refresh_token)
-static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
-#老師id-->U055f980c2a280233a6342e8132099b1a
-line_bot_api = LineBotApi('3xmkcHdxeFREm5d7X0YtBS5sdZS5J/XvwYAUf2XS5hcs0+LS2v+x1DMTorheXcddfL0GKgwb+of87nujHWkfWehHKtH469+UGGMbyFo+0Fzppar85P6gTt+aNsqVSmOjCUIZn8IaxQYdfJVEj+1UhAdB04t89/1O/w1cDnyilFU=')
-handler = WebhookHandler('04cc956e1800201b2005c5228958488d')
-url = 'https://line-bot-by-python.firebaseio.com'
+
+line_bot_api = LineBotApi(os.getenv('LINE_CHANNEL_ACCESS_TOKEN',None))
+handler = WebhookHandler(os.getenv('LINE_CHANNEL_SECRET', None))
+url = os.getenv('firebase_bot',None)
 fb = firebase.FirebaseApplication(url,None)
 
+# function for create tmp dir for download content
+# static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
+# def make_static_tmp_dir():
+#     if not os.path.exists(static_tmp_path):
+#         os.makedirs(static_tmp_path)
+
+#輸入網頁{https://robotyung.herokuapp.com/cuu_test就會發出訊息
+@app.route('/cuu_test')
+def handle_vote():
+    temp_set = save_line_id(os.getenv(line_kevin_id))#取得所有要推播訊息的userid
+    for v in temp_set:
+        if(app_send()=='投票'):
+            push_msg(v)
+        else:
+            line_bot_api.push_message(v, TextSendMessage(text=app_send()))
+            #line_bot_api.push_message(v, TextSendMessage(text='如有看到訊息請回ok或好\n表示你收到有意見就直接回'))
+    
+    return 'hello'
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
@@ -40,21 +63,18 @@ def callback():
     app.logger.info("Request body: " + body)
     # handle webhook body
     try:
-        handler.handle(body, signature)
+        handler.handle(body,signature)
+    except LineBotApiError as e:
+        print("Catch exception from LINE Messaging API: %s\n" % e.message)
+        for m in e.error.details:
+            print("ERROR is %s: %s" % (m.property, m.message))
+        print("\n")
     except InvalidSignatureError:
         abort(400)
+
     return 'OK'
-@app.route('/cuu_test')#輸入網頁{https://robotyung.herokuapp.com/cuu_test就會發出訊息
-def display():
-    temp_set = save_line_id('U728ffb2ce052577e6165dfc60d5b0dc0')#取得所有要推播訊息的userid
-    for v in temp_set:
-        if(app_send()=='投票'):
-            push_msg(v)
-        else:
-            line_bot_api.push_message(v, TextSendMessage(text=app_send()))
-            #line_bot_api.push_message(v, TextSendMessage(text='如有看到訊息請回ok或好\n表示你收到有意見就直接回'))
-    return 'hello'
-def bug(text):
+
+def serch_information(text):
     url = 'http://www.mis.ccu.edu.tw:8088/faculty_chi.aspx#AdjunctProfessor'
     html = requests.get(url)
     sp = bf(html.text,'html.parser')
@@ -75,7 +95,7 @@ def bug(text):
             return professor[v+28]
 from urllib.parse import quote
 
-def doing(event,text):
+def msg_hello(event,text):
     patterns = ['你好','hi','hello','哈囉','嗨','fuck']
     r = ['吳帆教授最近好嗎','哈囉吳教授 最近很忙嗎','你好阿 在做實驗室測試','這邊是中正大學資訊管理研究所','哈囉阿','帥哥 找我嗎?']
     n = random.randint(0,5)
@@ -251,68 +271,137 @@ def check_pic(img_id):
     )
     )
     return Confirm_template
-#def imagemap(event,text):
-#    patterns = ['bye','掰','再見']
-#    for pattern in patterns:
-#        if re.search(pattern,text.lower()):
-#            message = ImagemapSendMessage(
-#                    base_url='https://www.youtube.com/watch?v=3QHxNGB7Q0s',
-#                    alt_text='this is an imagemap',
-#                    base_size=BaseSize(height=1040, width=1040),
-#                    actions=[
-#                            URIImagemapAction(
-#                                    link_uri='https://i.imgur.com/M7R0Enu.jpg',
-#                                    area=ImagemapArea(
-#                                            x=0, y=0, width=520, height=1040
-#                                )
-#                                ),
-#                                MessageImagemapAction(
-#                                        text='hello',
-#                                        area=ImagemapArea(
-#                                            x=520, y=0, width=520, height=1040
-#                                         )
-#                               )
-#                   ]
-#            )
-#            line_bot_api.reply_message(event.reply_token,TextSendMessage(text='Hello, world')
+def datetime_template(event,title,text):
+    btn_tem_msg = TemplateSendMessage(
+            alt_text = '這是Datetimepicker_Template，只有智慧型手機可以顯示',
+            template = ButtonsTemplate(
+                thumbnail_image_url = 'https://i.imgur.com/WoPQJjB.jpg',
+                title = title,
+                text = text,
+                actions = [
+                    DatetimePickerTemplateAction(
+                            label='開始時間',
+                            data ='開始時間',
+                            mode = 'datetime',
+                            initial = '2018-11-01T08:00',
+                            min = '2017-01-01T00:00',
+                            max = '2020-12-31T23:59',
+                            ),
+                    DatetimePickerTemplateAction(
+                            label='結束時間',
+                            data ='結束時間',
+                            mode = 'datetime',
+                            initial = "2018-11-01T10:00",
+                            min = '2018-01-01T00:00',
+                            max = '2020-12-31T23:59'
+                            ),
+                    ]
+                )
+            )
+    line_bot_api.reply_message(event.reply_token,[btn_tem_msg,TextSendMessage(text='請選擇一項喔!')])
+def buttons_template(event,title,text,image_url,act1,act2,act3,act3_uri,act4,act4_uri):
+        tenplate_menu = TemplateSendMessage(
+            alt_text='這是Buttons_Template，只有智慧型手機可以顯示',
+            template = ButtonsTemplate(
+                title= title,
+                text = text,
+                thumbnail_image_url=image_url,
+                actions=[
+                    PostbackTemplateAction(
+                        label = act1,
+                        data = 'teacher'
+                    ),
+                    PostbackTemplateAction(
+                        label = act2,
+                        data = 'student'
+                    ),
+                    URITemplateAction(
+                        label = act3,
+                        uri = act3_uri
+                    ),
+                    URITemplateAction(
+                        label = act4,
+                        uri = act4_uri
+                    )
+                ]
+            )
+        )
+        line_bot_api.reply_message(event.reply_token,[tenplate_menu,TextSendMessage(text='請選擇一項喔!')])
+
+@handler.add(PostbackEvent)
+def def_postback(event):
+     if event.postback.data == 'teacher' or event.postback.data == 'student':
+         datetime_template(event,'請假時間確定','請選擇要請假的起始時間至結束時間'+event.postback.data)
+     elif event.postback.data == '開始時間':
+         start = '開始時間'+event.postback.params['datetime']
+         line_bot_api.reply_message(event.reply_token,TextSendMessage(text=start))
+     elif event.postback.data == '結束時間':
+         start = '結束時間'+event.postback.params['datetime']
+         line_bot_api.reply_message(event.reply_token,TextSendMessage(text=start))
+     line_bot_api.reply_message(event.reply_token,TextSendMessage(text='都沒有'+event.postback.data))
+#enter the group
+@handler.add(JoinEvent)
+def handle_join(event):
+    newcoming_text = "謝謝邀請我這個ccu linebot來至此群組！！我會當做個位小幫手～"
+
+    line_bot_api.reply_message(
+            event.reply_token,
+            TextMessage(text=newcoming_text + str(JoinEvent))
+        )
+#leave the group
+@handler.add(LeaveEvent)
+def handle_leave(event):
+    print("leave Event =", event)
+    print()
+
 #處理音訊
-#from pydub import AudioSegment
-#import speech_recognition as sr
-#@handler.add(MessageEvent,message=AudioMessage)
-#def handle_aud(event):
-#    r = sr.Recognizer()
-#    message_content = line_bot_api.get_message_content(event.message.id)
-#    ext = 'aac'
-#    try:
-#        with tempfile.NamedTemporaryFile(prefix=ext + '-', delete=False) as tf:
-#            for chunk in message_content.iter_content():
-#                tf.write(chunk)
-#            tempfile_path = tf.name
-#        dist_path = tempfile_path + '.' + ext
-#        
-#        test = 'out'
-#        
-#        AudioSegment.converter = '/app/.heroku/vendor/ffmpeg/bin/ffmpeg'
-#        sound = AudioSegment.from_file(dist_path, format="aac")
-#        dist_path = os.path.splitext(dist_path)[0]+'.mp3'
-#        sound.export(dist_path, format="mp3")
-#        test = 'in'
-##        
-#        dist_name = os.path.basename(dist_path)
-#        os.rename(tempfile_path,dist_path)
-#        test = 'in'
-#        path = os.path.join('/tmp', dist_name)
-#        with sr.AudioFile(path) as source:
-#            audio = r.record(source)
-#    except:
-#        t = '音訊有問題'+test
-#        line_bot_api.reply_message(event.reply_token,TextSendMessage(text=t))
-#    os.remove(path)
-#    text = r.recognize_google(audio,language='zh-TW')
-#    line_bot_api.reply_message(event.reply_token,TextSendMessage(text='你的訊息是=\n'+text))
+# from pydub import AudioSegment
+# import speech_recognition as sr
+# @handler.add(MessageEvent,message=AudioMessage)
+# def handle_aud(event):
+#     r = sr.Recognizer()
+#     test = 'begin'
+#     message_content = line_bot_api.get_message_content(event.message.id)
+#     ext = 'mp3'
+#     try:
+#         with tempfile.NamedTemporaryFile(prefix=ext + '-', delete=False) as tf:
+#             for chunk in message_content.iter_content():
+#                 tf.write(chunk)
+#             tempfile_path = tf.name
+#         path = tempfile_path #'.' + ext 不能加.ext 因為原本檔案沒有這名稱 這樣會導致-->No such file or dictionory
+#         AudioSegment.converter = '/app/vendor/ffmpeg/ffmpeg'
+#         sound = AudioSegment.from_file(path)
+#         path = os.path.splitext(path)[0]+'.wav'
+#         sound.export(path, format="wav")
+        
+        # dist_path = tempfile_path + '.' + ext
+        # test = 'out'
+        # # AudioSegment.converter = '/app/.heroku/vendor/ffmpeg/bin/ffmpeg'
+        # # AudioSegment.converter.ffmpeg = '/app/.heroku/vendor/ffmpeg'
+        # AudioSegment.converter = '/app/vendor/ffmpeg/ffmpeg'
+        # sound = AudioSegment.from_file(dist_path)
+        # test = 'outter'
+        # dist_path = os.path.splitext(dist_path)[0]+'.wav'
+        # sound.export(dist_path, format="wav")
+        # test = 'in'
+        # dist_name = os.path.basename(dist_path)
+        # os.rename(tempfile_path,dist_path)
+        # path = os.path.join('/tmp', dist_name)
+        
+        
+        
+        
+    #     with sr.AudioFile(path) as source:
+    #         audio = r.record(source)
+    # except Exception as e:
+    #     t = '幹音訊有問題'+test+str(e.args)+path
+    #     line_bot_api.reply_message(event.reply_token,TextSendMessage(text=t))
+    # os.remove(path)
+    # text = r.recognize_google(audio,language='zh-TW')
+    # line_bot_api.reply_message(event.reply_token,TextSendMessage(text='你的訊息是=\n'+text))
 #處理圖片
 @handler.add(MessageEvent,message=ImageMessage)
-def handle_msg(event):
+def handle_msg_img(event):
     profile = line_bot_api.get_profile(event.source.user_id)
     tem_name = str(profile.display_name)
     temp=''
@@ -352,9 +441,14 @@ def handle_msg(event):
     except :
         t = '上傳失敗dist_name'+temp
         line_bot_api.reply_message(event.reply_token,TextSendMessage(text=t))
+# 處理位置:
+@handler.add(MessageEvent, message=LocationMessage)
+def handle_msg_locate(event):
+    temp = 'title:{}\naddress:{}\nlatitude:{}\nlongitude:{}'.format(event.message.title,event.message.address,event.message.latitude,event.message.longitude )
+    line_bot_api.reply_message(event.reply_token,TextSendMessage(text='地點在'+temp))
 # 處理訊息:
 @handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
+def handle_msg_text(event):
     global tem_id
     profile = line_bot_api.get_profile(event.source.user_id)
     tem_id = str(profile.user_id)
@@ -368,7 +462,16 @@ def handle_message(event):
         if count == len(t):#取得最後一個dict項目
             img_id = value['id']
         count+=1
-    if doing(event,event.message.text)!=None:
+    if msg_hello(event,event.message.text)!=None:
+        return
+    elif event.message.text == 'where':
+        message = LocationSendMessage(
+        title='My CCU Lab',
+        address='國立中正大學',
+        latitude=23.563381,
+        longitude=120.4706944
+        )
+        line_bot_api.reply_message(event.reply_token, message)
         return
     elif img_describe(event.message.text,img_id)!=None:
         content = img_describe(event.message.text,img_id)
@@ -376,44 +479,19 @@ def handle_message(event):
         image = get_image(event.message.text)
         line_bot_api.reply_message(event.reply_token, image)
         return
-#    elif imagemap(event,event.message.text)!=None:
-#        
-#        return
-    elif bug(event.message.text)!=None:
-        content = bug(event.message.text)
+    elif serch_information(event.message.text)!=None:
+        content = serch_information(event.message.text)
     elif content =='lab':
-        content = 'successful again'
+        t = type(event.message)
+        s = type(event.message.text)
+        content = 'event='+str(t)+str(s)
     elif fbchoose(event.message.text)!=None:
         content = fbchoose(event.message.text)
     elif get(event.message.text,tem_name)!=None:
         content = get(event.message.text,tem_name)
-    elif event.message.text == "girl":
-        imagemap_message = ImagemapSendMessage(
-                        base_url='https://i.imgur.com/SN2GVbp.jpg',
-                        alt_text='this is an imagemap',
-                        base_size=BaseSize(height=1040, width=1040),
-                        actions=[
-                            URIImagemapAction(
-                                link_uri='https://youtu.be/mi4ZEqNWzCE',
-                                area=ImagemapArea(
-                                    x=0, y=0, width=520, height=520
-                                )
-                            ),
-                            MessageImagemapAction(
-                                text='右下',
-                                area=ImagemapArea(
-                                    x=520, y=520, width=520, height=520
-                                )
-                            ),
-                            MessageImagemapAction(
-                                text='右上',
-                                area=ImagemapArea(
-                                    x=520, y=0, width=520, height=520
-                                )
-                            )
-                        ]
-                    )
-        line_bot_api.reply_message(event.reply_token,imagemap_message)
+    elif event.message.text == "test":
+        static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
+        content = static_tmp_path
     elif event.message.text == "隨便一張":
         client = ImgurClient(client_id, client_secret)
         images = client.get_album_images(album_id)
@@ -425,14 +503,57 @@ def handle_message(event):
         )
         line_bot_api.reply_message(event.reply_token,image_message)
         return
+    elif event.message.text == 'profile':
+        if isinstance(event.source, SourceUser):
+            profile = line_bot_api.get_profile(event.source.user_id)
+            line_bot_api.reply_message(
+                event.reply_token, [
+                    TextSendMessage(text='Display name: ' + str(profile.display_name)),
+                    TextSendMessage(text='Status message: ' + str(profile.status_message))
+                ]
+            )
+        return
+    elif event.message.text == 'menu':#event,title,text,image_url,act1,act2,act3,act3_uri,act4,act4_uri
+        buttons_template(event,'請假系統','歡迎來到請假系統，請選擇一項','https://i.imgur.com/fsIKoMX.jpg','老師請假','學生請假','電話洽詢','tel://0930288038','分享帳號','line://nv/recommendOA/@pqv5799k')
+        return
+        # tenplate_menu = TemplateSendMessage(
+        #         alt_text='This is Template',
+        #         template = ButtonsTemplate(
+        #             title='Menu',
+        #             text = 'please choose one',
+        #             thumbnail_image_url='https://i.imgur.com/bR81VQj.jpg',
+        #             actions=[
+        #                 PostbackTemplateAction(
+        #                     label = '病假',
+        #                     # text = '病假',
+        #                     data = 'action=buy&itemid=1'
+        #                 ),
+        #                 MessageTemplateAction(
+        #                     label = '事假',
+        #                     text = '事假'
+        #                 ),
+        #                 URITemplateAction(
+        #                     label = '電話',
+        #                     uri = 'tel://12345678'
+        #                 ),
+        #                 URITemplateAction(
+        #                     label = '分享這帳號',
+        #                     uri = 'line://nv/recommendOA/@pqv5799k'
+        #                 )
+        #             ]
+        #         )
+        # )
+        # line_bot_api.reply_message(event.reply_token,tenplate_menu)
+        # return
     else:
-        reword = ['安靜啦 乾','去找你妹','請問沛最近好嗎?','不要跟我耍嘴砲','在嘴阿','小楊是育成高中','我覺得有道理','你在說泰語','別靠北','在嗆阿','你在恭殺小啦','怎樣?','請注意你說話','高潮你妹啦','在說人話嗎?','管你?','你知道林北是誰嗎','閉嘴']
+        reword = ['安靜啦 乾','去找你妹','請問沛?','不要跟我耍嘴砲','在嘴阿','小楊是育成高中','我覺得有道理','你在說泰語','別靠北','在嗆阿','你在恭殺小啦','怎樣?','請注意你說話','高潮你妹啦','在說人話嗎?','管你?','你知道林北是誰嗎','閉嘴']
         r = random.randint(0,17)
+        n = len(reword[r])
         t =  quote(reword[r])
         stream_url = 'https://google-translate-proxy.herokuapp.com/api/tts?query='+t+'&language=zh-tw'
         message = AudioSendMessage(
             original_content_url = stream_url,
-            duration=300000
+            duration=n*400#千分之一秒
         )
         line_bot_api.reply_message(event.reply_token,message)
         return
