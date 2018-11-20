@@ -271,6 +271,24 @@ def check_pic(img_id):
     )
     )
     return Confirm_template
+def confirm_template(event,title,text):
+    confirm_msg = TemplateSendMessage(
+            alt_text = '這是Confirm_Template，只有智慧型手機可以顯示',
+            template = ConfirmTemplate(
+                    title = title,
+                    text = text,
+                    actions = [
+                        PostbackTemplateAction(
+                            label = 'act1',
+                            data = 'y'
+                            ),
+                        PostbackTemplateAction(
+                            label = 'act2',
+                            data = 'n'
+                            )
+                        ]
+                    )
+            )
 def datetime_template(event,title,text):
     btn_tem_msg = TemplateSendMessage(
             alt_text = '這是Datetimepicker_Template，只有智慧型手機可以顯示',
