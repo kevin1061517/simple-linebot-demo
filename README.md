@@ -36,15 +36,17 @@ Heroku 上使用 webdriver 爬蟲抓資料
 
 heroku的webdriver 使用說明---------->https://devcenter.heroku.com/articles/heroku-ci#known-issues    
 heroku的轉換webdriver 使用說明----->https://devcenter.heroku.com/articles/cedar-14-stack   
+
 需要架在heroku上面的buildpack和變數設定
+====
 需要加入的兩個buildpack分別是如下兩個:
 ------- 
 
 1.https://github.com/heroku/heroku-buildpack-chromedriver   
 2.https://github.com/heroku/heroku-buildpack-xvfb-google-chrome   
+
 需要加入的環境變數為如下兩個:
 ------- 
-
 1.CHROMEDRIVER_PATH---->/app/.chromedriver/bin/chromedriver   
 2.GOOGLE_CHROME_BIN--->/app/.apt/usr/bin/google-chrome    
 最後還需要再requirement.txt檔加上selenium==3.8.0，這邊搞了我很久，一開始沒打上版本，會很不穩定常常崩潰，爬文爬到說一定要指定selenium==3.8.0，因為這個版本的selenium是最穩定的樣子
