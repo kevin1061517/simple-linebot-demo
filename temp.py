@@ -13,7 +13,8 @@ from linebot.models import (
     ButtonsTemplate,LocationSendMessage,AudioSendMessage,ButtonsTemplate,
     ImageMessage,URITemplateAction,MessageTemplateAction,ConfirmTemplate,
     PostbackTemplateAction,ImageSendMessage,MessageEvent, TextMessage, 
-    TextSendMessage,StickerMessage, StickerSendMessage,DatetimePickerTemplateAction
+    TextSendMessage,StickerMessage, StickerSendMessage,DatetimePickerTemplateAction,
+    CarouselColumn,CarouselTemplate
 )
 from imgurpython import ImgurClient
 from config import *
@@ -22,6 +23,7 @@ from bs4 import BeautifulSoup as bf
 import requests
 import random
 import os,tempfile
+
 app = Flask(__name__)
 #imgur上傳照片
 client_id = os.getenv('client_id',None)
@@ -30,30 +32,11 @@ album_id = os.getenv('album_id',None)
 access_token = os.getenv('access_token',None)
 refresh_token = os.getenv('refresh_token',None)
 client = ImgurClient(client_id, client_secret, access_token, refresh_token)
-
-line_bot_api = LineBotApi(os.getenv('LINE_CHANNEL_ACCESS_TOKEN',None))
-handler = WebhookHandler(os.getenv('LINE_CHANNEL_SECRET', None))
 url = os.getenv('firebase_bot',None)
 fb = firebase.FirebaseApplication(url,None)
+line_bot_api = LineBotApi(os.getenv('LINE_CHANNEL_ACCESS_TOKEN',None))
+handler = WebhookHandler(os.getenv('LINE_CHANNEL_SECRET', None))
 
-# function for create tmp dir for download content
-# static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
-# def make_static_tmp_dir():
-#     if not os.path.exists(static_tmp_path):
-#         os.makedirs(static_tmp_path)
-
-#輸入網頁{https://robotyung.herokuapp.com/cuu_test就會發出訊息
-@app.route('/cuu_test')
-def handle_vote():
-    temp_set = save_line_id(os.getenv(line_kevin_id))#取得所有要推播訊息的userid
-    for v in temp_set:
-        if(app_send()=='投票'):
-            push_msg(v)
-        else:
-            line_bot_api.push_message(v, TextSendMessage(text=app_send()))
-            #line_bot_api.push_message(v, TextSendMessage(text='如有看到訊息請回ok或好\n表示你收到有意見就直接回'))
-    
-    return 'hello'
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
@@ -71,54 +54,25 @@ def callback():
         print("\n")
     except InvalidSignatureError:
         abort(400)
-
     return 'OK'
 
-def serch_information(text):
-    url = 'http://www.mis.ccu.edu.tw:8088/faculty_chi.aspx#AdjunctProfessor'
-    html = requests.get(url)
-    sp = bf(html.text,'html.parser')
-    name = sp.find("table",{"style":"width: 725px; height: 145px; line-height: 16pt;"})
-    name2 = name.find_all('a',{'target':'_blank'})#size=35,資料到27為止
-    professor = []
-    for v in name2[0:28]:
-        professor.append(v.text.strip())
-        #len(professor)--->28
-    job = sp.find("table",{"style":"width: 725px; height: 145px; line-height: 16pt;"})
-    job2 = job.find_all('div',{'align':'center'})#size138  good
-    for v in range(5,59,4):
-        professor.append(job2[v].text.strip())
-    for v in range(0,28,2):
-        if re.search(professor[v]+r'.*email',text):
-            return professor[v+1]
-        elif re.search(professor[v]+r'.*job',text):
-            return professor[v+28]
-from urllib.parse import quote
 
-def msg_hello(event,text):
-    patterns = ['你好','hi','hello','哈囉','嗨','fuck']
-    r = ['吳帆教授最近好嗎','哈囉吳教授 最近很忙嗎','你好阿 在做實驗室測試','這邊是中正大學資訊管理研究所','哈囉阿','帥哥 找我嗎?']
-    n = random.randint(0,5)
-    for pattern in patterns:
-        if re.search(pattern,text.lower()):
-                push_txt = r[n]
-                t =  quote(push_txt)
-                stream_url = 'https://google-translate-proxy.herokuapp.com/api/tts?query='+t+'&language=zh-tw'
-                test = 'https://google-translate-proxy.herokuapp.com/api/tts?query=%E5%93%88%E5%9B%89&language=zh-tw'
-#               with open('stream.mp3', 'wb') as f:
-#                    try:
-#                        for block in r.iter_content(1024):
-#                            f.write(block)
-#                        f.close()
-#                        subprocess.call('madplay stream.mp3 -o wave:- | aplay -D plughw:1,0',shell=True) 
-#                    except KeyboardInterrupt:
-#                        pass
-                n = len(push_txt)
-                message = AudioSendMessage(
-                    original_content_url = stream_url,
-                    duration=n*400#千分之一秒
-                )
-                line_bot_api.reply_message(event.reply_token,message)
+import json
+from selenium import webdriver
+def get_shop_rank(shop_name):
+    temp = shop_name
+    print(temp)
+    url = 'https://www.google.com.tw/search?q='+temp+'&rlz=1C1EJFA_enTW773TW779&oq='+temp+'&aqs=chrome..69i57j0j69i60l2j69i59l2.894j0j7&sourceid=chrome&ie=UTF-8'
+    res = requests.get(url)
+    soup = bf(res.text,'html.parser')
+    n = soup.find_all('div',{'class':"IvtMPc"})
+    name = []
+    rank = []
+    for t in n:
+        name.append(t.find_all('span')[0].text)
+        rank.append(t.find_all('span')[1].text)
+    return name,rank
+
 def img_describe(text,img_id):#紀錄describe 把firebase裡面describe修改
     t = fb.get('/pic',None)
     tex = text[1:]
@@ -149,108 +103,205 @@ def get_image(text):
                         preview_image_url=url
                 )
                 return image_message
-    
-def judge(arr,text):#判斷輸入的值是否為keyError Exception
-    r = random.randint(0,4)
-    try:
-        for key,value in arr[text][r].items():
-            return str(key+value)
-    except KeyError:
-        return 'keyError'
-def fbchoose(text):
-    t = fb.get('/chat',None)
-    for key,value in t.items():
-        if judge(value,text)!='keyError':
-            return judge(value,text)
-def get(text,name):
-    tex = ''
-    temp = ''
-    patterns = ['收到','ok']
-    for pattern in patterns:
-        if re.search(pattern,text.lower()):
-            t = fb.get('/app',None)
-            count = 1
-            for key,value in t.items():
-                if count == len(t):#取得最後一個dict項目
-                    tex = value['read']
-                count+=1
-            a = tex.split('\n')
-            a.remove('')
-            s = set(a)
-            for v in s:
-                temp=temp+v+'\n'
-            return '已收到，目前已讀人數是:'+str(len(s))+'人\n如下人員:\n'+temp
-def app_send():#取得APP發的訊息，要推播給Line_user的訊息
-    t = fb.get('/app',None)
-    count = 1
-    for key,value in t.items():
-        if count == len(t):#取得最後一個dict項目
-            return value['msg']
-        count+=1
-def save_response(read_name,reply):#儲存對話紀錄
-    t = fb.get('/app',None)
-    count = 1
-    for key,value in t.items():
-        if count == len(t):#取得最後一個dict項目
-            s = value['read']
-            s = s+read_name+'\n'#記錄姓名
-            r = value['reply']
-            r = r+read_name+': '+reply+'\n'#記錄已讀回話
-            data2 = {'msg': value['msg'], 'read': s, 'reply':r, 'time': value['time']}
-            fb.put(url+'/app/',data=data2,name=key)
-        count+=1
-def save_line_id(user_id):#儲存line使用者id，使用在推播訊息
-    s = set()      #建立一個set，set裡面的資料不會重覆出現
-    t = fb.get('userid',None)
-    if t != None:
-        for key,value in t.items():#把firebase裡面的value一個個取出
-            s.add(value)
-    if user_id not in s:#如果set裡面沒有user_id就加入database
-        fb.post('/userid',user_id)
-        s.add(user_id)
-    return s
-def push_msg(line_id):
-    title=''
-    text=''
-    item=''
-    item2=''
-    item3=''
-    count = 1
-    t = fb.get('/vote',None)
-    for key,value in t.items():
-        if count == len(t):#取得最後一個dict項目
-            title = value['title']
-            text = value['text']
-            item = value['item1']
-            item2 = value['item2']
-            item3 = value['item3']
-        count+=1
-    if item3=='':
-        item3 = '--------------'
-    buttons_template = TemplateSendMessage(
-    alt_text='Buttons Template',
-    template=ButtonsTemplate(
-    title= title,
-    text= text,
-    thumbnail_image_url='https://i.imgur.com/M7R0Enu.jpg',
-    actions=[
-            MessageTemplateAction(
-                    label=item,
-                    text='ButtonsTemplate'
-            ),
-            PostbackTemplateAction(   
-                    label=item2,
-                    text='postback text',
-                    data='postback1'
-            ),
-            MessageTemplateAction(
-                    label=item3,
-                    text='ButtonsTemplate'
+def job_seek():
+    target_url = 'https://www.104.com.tw/jobbank/custjob/index.php?r=cust&j=503a4224565c3e2430683b1d1d1d1d5f2443a363189j48&jobsource=joblist_b_relevance#info06'
+    print('Start parsing appleNews....')
+    rs = requests.session()
+    res = rs.get(target_url)
+    res.encoding = 'utf-8'
+    soup = bf(res.text, 'html.parser')
+    content = ""
+    temp = []
+    reback = []
+    for date in soup.select('.joblist_cont .date'):
+        if date.text == '':
+            temp.append('緊急!!重點職務')
+        else:
+            temp.append(date.text)
+    for v,data in enumerate(soup.select('.joblist_cont .jobname a'),0):
+        link = data['href']
+        title = data['title']
+        content += '發布時間->{}\n工作名稱->{}\n連結網址->{}\n'.format(temp[v],title,'https://www.104.com.tw'+link)
+        if v%5==0 :
+            if v == 0:
+                continue
+            reback.append(TextSendMessage(text=content))
+            content = ''
+    return reback
+def movie_template():
+            buttons_template = TemplateSendMessage(
+            alt_text='電影 template',
+            template=ButtonsTemplate(
+                title='服務類型',
+                text='請選擇',
+                thumbnail_image_url='https://i.imgur.com/zzv2aSR.jpg',
+                actions=[
+                    MessageTemplateAction(
+                        label='近期上映電影',
+                        text='近期上映電影'
+                    ),
+                    MessageTemplateAction(
+                        label='依莉下載電影',
+                        text='eyny'
+                    ),
+                    MessageTemplateAction(
+                        label='觸電網-youtube',
+                        text='觸電網-youtube'
+                    ),
+                    MessageTemplateAction(
+                        label='Marco體驗師-youtube',
+                        text='Marco體驗師'
+                    )
+                ]
             )
-            ]
-    )
-    )
-    line_bot_api.push_message(line_id,buttons_template)
+        )
+            return buttons_template
+def apple_news():
+    target_url = 'https://tw.appledaily.com/new/realtime'
+    print('Start parsing appleNews....')
+    rs = requests.session()
+    res = rs.get(target_url, verify=False)
+    soup = bf(res.text, 'html.parser')
+    content = ""
+
+    for index, data in enumerate(soup.select('.rtddt a'), 0):
+        if index == 5:
+            return content
+        title = data.select('font')[0].text
+        link = data['href']
+        content += '{}\n{}\n'.format(title,link)
+    return content
+
+def get_image_link(search_query):
+    img_urls = []
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.binary_location = os.getenv('GOOGLE_CHROME_BIN',None)
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--no-sandbox')
+    driver = webdriver.Chrome(chrome_options=chrome_options,executable_path=os.getenv('CHROMEDRIVER_PATH',None))
+#    driver = webdriver.Chrome(executable_path='/app/.chromedriver/bin/chromedriver')
+    if search_query[-4:] == 'menu':
+        t = search_query[:-4]+'餐點價格'
+        url = 'https://www.google.com.tw/search?q='+t+'&rlz=1C1EJFA_enTW773TW779&source=lnms&tbm=isch&sa=X&ved=0ahUKEwjX47mP-IjfAhWC7GEKHcZCD4YQ_AUIDigB&biw=1920&bih=969'
+    elif search_query[-3:] == 'pic':
+        t = search_query[:-3]
+        url = 'https://www.google.com.tw/search?rlz=1C1EJFA_enTW773TW779&biw=1920&bih=920&tbs=isz%3Alt%2Cislt%3Asvga&tbm=isch&sa=1&ei=1UwFXLa8FsT48QWsvpOQDQ&q='+t+'&oq='+t+'&gs_l=img.3..0l10.10955.19019..20688...0.0..0.65.395.10......3....1..gws-wiz-img.....0..0i24.sGlMLu_Pdf0'
+    driver.get(url)
+    imges = driver.find_elements_by_xpath('//div[contains(@class,"rg_meta notranslate")]')
+    count = 0
+    for img in imges:
+        img_url = json.loads(img.get_attribute('innerHTML'))["ou"]
+        print(str(count)+'--->'+str(img_url))
+        if img_url.startswith('https') == False or (img_url in img_urls) == True or img_url.endswith('jpg') == False:
+            continue
+        else:
+            img_urls.append(img_url)
+            count = count + 1
+            if count > 3:
+                break
+    driver.quit()
+    return img_urls
+
+#更改
+def drink_menu(text):
+    pattern = r'.*menu$'
+    web = []
+    if re.search(pattern,text.lower()):
+        
+        temp = get_image_link(text)
+        print('fun'+str(temp))
+        for t in temp:
+            web.append(ImageSendMessage(original_content_url=t,preview_image_url=t))
+        return web
+    
+def google_picture(text):
+    pattern = r'.*pic$'
+    web = []
+    if re.search(pattern,text.lower()):
+        temp = get_image_link(text)
+        for t in temp:
+            web.append(ImageSendMessage(original_content_url=t,preview_image_url=t))
+        return web
+def sister_picture(text):
+    pattern = r'.*sister$'
+    web = []
+    r = random.randint(0,122)
+    url = 'https://forum.gamer.com.tw/Co.php?bsn=60076&sn=26514065'
+    res = requests.get(url)
+    soup = bf(res.text,'html.parser')
+    if re.search(pattern,text.lower()):
+       temp = []
+       temp.append('https://img.pornpics.com/2014-07-14/281181_13.jpg')
+       for item in soup.select('.photoswipe-image'):
+           temp.append(item.get('href'))
+       for t in temp[r:r+5]:
+            web.append(ImageSendMessage(original_content_url=t,preview_image_url=t))
+       return web
+def movie():
+    target_url = 'http://www.atmovies.com.tw/movie/next/0/'
+    print('Start parsing movie ...')
+    rs = requests.session()
+    res = rs.get(target_url, verify=False)
+    res.encoding = 'utf-8'
+    soup = bf(res.text, 'html.parser')
+    content = ""
+    for index, data in enumerate(soup.select('ul.filmNextListAll a')):
+        if index == 20:
+            return content
+        title = data.text.replace('\t', '').replace('\r', '')
+        link = "http://www.atmovies.com.tw" + data['href']
+        content += '{}\n{}\n'.format(title, link)
+    return content
+def pattern_mega(text):
+    patterns = [
+        'mega', 'mg', 'mu', 'ＭＥＧＡ', 'ＭＥ', 'ＭＵ',
+        'ｍｅ', 'ｍｕ', 'ｍｅｇａ', 'GD', 'MG', 'google',
+    ]
+    for pattern in patterns:
+        if re.search(pattern, text, re.IGNORECASE):
+            return True
+def eyny_movie():
+    target_url = 'http://www.eyny.com/forum-205-1.html'
+    rs = requests.session()
+    res = rs.get(target_url, verify=False)
+    soup = bf(res.text, 'html.parser')
+    content = ''
+    for titleURL in soup.select('.bm_c tbody .xst'):
+        if pattern_mega(titleURL.text):
+            title = titleURL.text
+            if '11379780-1-3' in titleURL['href']:
+                continue
+            link = 'http://www.eyny.com/' + titleURL['href']
+            data = '{}\n{}\n\n'.format(title, link)
+            content += data
+    return content
+
+def panx():
+    target_url = 'https://panx.asia/'
+    print('Start parsing ptt hot....')
+    rs = requests.session()
+    res = rs.get(target_url, verify=False)
+    soup = bf(res.text, 'html.parser')
+    content = ""
+    for data in soup.select('div.container div.row div.desc_wrap h2 a'):
+        title = data.text
+        link = data['href']
+        content += '{}\n{}\n\n'.format(title, link)
+    return content
+def magazine():
+    target_url = 'https://www.cw.com.tw/'
+    rs = requests.session()
+    res = rs.get(target_url, verify=False)
+    res.encoding = 'utf-8'
+    soup = bf(res.text, 'html.parser')
+    temp = ""
+    for v ,date in enumerate(soup.select('.caption h3 a'),0):
+        url = date['href']
+        title = date.text.strip()
+        temp += '{}\n{}\n'.format(title,url)
+        if(v>4):
+            break
+    return temp
 def check_pic(img_id):
     Confirm_template = TemplateSendMessage(
     alt_text='要給你照片標籤描述嗎?',
@@ -271,159 +322,75 @@ def check_pic(img_id):
     )
     )
     return Confirm_template
-def confirm_template(event,title,text):
-    confirm_msg = TemplateSendMessage(
-            alt_text = '這是Confirm_Template，只有智慧型手機可以顯示',
-            template = ConfirmTemplate(
-                    title = title,
-                    text = text,
-                    actions = [
-                        PostbackTemplateAction(
-                            label = 'act1',
-                            data = 'y'
-                            ),
-                        PostbackTemplateAction(
-                            label = 'act2',
-                            data = 'n'
-                            )
-                        ]
-                    )
-            )
-def datetime_template(event,title,text):
-    btn_tem_msg = TemplateSendMessage(
-            alt_text = '這是Datetimepicker_Template，只有智慧型手機可以顯示',
-            template = ButtonsTemplate(
-                thumbnail_image_url = 'https://i.imgur.com/WoPQJjB.jpg',
-                title = title,
-                text = text,
-                actions = [
-                    DatetimePickerTemplateAction(
-                            label='開始時間',
-                            data ='開始時間',
-                            mode = 'datetime',
-                            initial = '2018-11-01T08:00',
-                            min = '2017-01-01T00:00',
-                            max = '2020-12-31T23:59',
-                            ),
-                    DatetimePickerTemplateAction(
-                            label='結束時間',
-                            data ='結束時間',
-                            mode = 'datetime',
-                            initial = "2018-11-01T10:00",
-                            min = '2018-01-01T00:00',
-                            max = '2020-12-31T23:59'
-                            ),
-                    ]
-                )
-            )
-    line_bot_api.reply_message(event.reply_token,[btn_tem_msg,TextSendMessage(text='請選擇一項喔!')])
-def buttons_template(event,title,text,image_url,act1,act2,act3,act3_uri,act4,act4_uri):
-        tenplate_menu = TemplateSendMessage(
-            alt_text='這是Buttons_Template，只有智慧型手機可以顯示',
-            template = ButtonsTemplate(
-                title= title,
-                text = text,
-                thumbnail_image_url=image_url,
-                actions=[
-                    PostbackTemplateAction(
-                        label = act1,
-                        data = 'teacher'
-                    ),
-                    PostbackTemplateAction(
-                        label = act2,
-                        data = 'student'
-                    ),
-                    URITemplateAction(
-                        label = act3,
-                        uri = act3_uri
-                    ),
-                    URITemplateAction(
-                        label = act4,
-                        uri = act4_uri
-                    )
-                ]
-            )
-        )
-        line_bot_api.reply_message(event.reply_token,[tenplate_menu,TextSendMessage(text='請選擇一項喔!')])
 
+def button_template(name,shop_name,title,text,image_url):
+    message = TemplateSendMessage(
+            alt_text = 'Button Template',
+            template = ButtonsTemplate(
+                    title = title,
+                    text = name+text,
+                    thumbnail_image_url = image_url,
+                    actions = [
+                            URITemplateAction(
+                                    label = '搜尋一下附近其他美食',
+                                    uri = 'line://nv/location'
+                                    ),
+                            PostbackTemplateAction(
+                                    label = shop_name+'的google評價',
+                                    data = 'rank&'+shop_name,
+                                    ),
+                            MessageTemplateAction(
+                                    label = '納入口袋名單',
+                                    text = '納入口袋名單'
+                                    )
+                            ]
+                    )
+            
+            )
+    return message
+def mrt_stop(text):
+    url = 'http://tcgmetro.blob.core.windows.net/stationnames/stations.json'
+    res = requests.get(url)
+    doc=json.loads(res.text)
+    t = doc['resource']
+    print('doc'+str(doc))
+    temp = ''
+    for i in t:
+        if text == i['Destination']:
+             temp += '現在捷運在->'+i['Station']+'\n'
+    print('mrt_fun'+temp)
+    return temp
+    
 @handler.add(PostbackEvent)
-def def_postback(event):
-     if event.postback.data == 'teacher' or event.postback.data == 'student':
-         datetime_template(event,'請假時間確定','請選擇要請假的起始時間至結束時間'+event.postback.data)
-     elif event.postback.data == '開始時間':
-         start = '開始時間'+event.postback.params['datetime']
-         line_bot_api.reply_message(event.reply_token,TextSendMessage(text=start))
-     elif event.postback.data == '結束時間':
-         start = '結束時間'+event.postback.params['datetime']
-         line_bot_api.reply_message(event.reply_token,TextSendMessage(text=start))
-     line_bot_api.reply_message(event.reply_token,TextSendMessage(text='都沒有'+event.postback.data))
-#enter the group
+def handle_postback(event):
+    temp = event.postback.data
+    s = ''
+    if event.postback.data[0:1] == 'T':
+        temp = event.postback.data[1:]
+        print('postback'+temp)
+        s = mrt_stop(temp)
+        line_bot_api.reply_message(
+            event.reply_token, TextSendMessage(text=s))
+    elif temp[:4] == 'rank':
+        name,rank = get_shop_rank(temp[5:])
+        print(name)
+        print(rank)
+        for i in range(len(name)):
+            s = s + '{}的評價是{}顆星-僅為參考\n'.format(name[i],rank[i])
+        line_bot_api.reply_message(event.reply_token,TextSendMessage(text=s))
 @handler.add(JoinEvent)
 def handle_join(event):
     newcoming_text = "謝謝邀請我這個ccu linebot來至此群組！！我會當做個位小幫手～"
-
+#    謝謝邀請我這個ccu linebot來至此群組！！我會當做個位小幫手～<class 'linebot.models.events.JoinEvent'>
     line_bot_api.reply_message(
             event.reply_token,
             TextMessage(text=newcoming_text + str(JoinEvent))
         )
-#leave the group
-@handler.add(LeaveEvent)
-def handle_leave(event):
-    print("leave Event =", event)
-    print()
-
-#處理音訊
-# from pydub import AudioSegment
-# import speech_recognition as sr
-# @handler.add(MessageEvent,message=AudioMessage)
-# def handle_aud(event):
-#     r = sr.Recognizer()
-#     test = 'begin'
-#     message_content = line_bot_api.get_message_content(event.message.id)
-#     ext = 'mp3'
-#     try:
-#         with tempfile.NamedTemporaryFile(prefix=ext + '-', delete=False) as tf:
-#             for chunk in message_content.iter_content():
-#                 tf.write(chunk)
-#             tempfile_path = tf.name
-#         path = tempfile_path #'.' + ext 不能加.ext 因為原本檔案沒有這名稱 這樣會導致-->No such file or dictionory
-#         AudioSegment.converter = '/app/vendor/ffmpeg/ffmpeg'
-#         sound = AudioSegment.from_file(path)
-#         path = os.path.splitext(path)[0]+'.wav'
-#         sound.export(path, format="wav")
-        
-        # dist_path = tempfile_path + '.' + ext
-        # test = 'out'
-        # # AudioSegment.converter = '/app/.heroku/vendor/ffmpeg/bin/ffmpeg'
-        # # AudioSegment.converter.ffmpeg = '/app/.heroku/vendor/ffmpeg'
-        # AudioSegment.converter = '/app/vendor/ffmpeg/ffmpeg'
-        # sound = AudioSegment.from_file(dist_path)
-        # test = 'outter'
-        # dist_path = os.path.splitext(dist_path)[0]+'.wav'
-        # sound.export(dist_path, format="wav")
-        # test = 'in'
-        # dist_name = os.path.basename(dist_path)
-        # os.rename(tempfile_path,dist_path)
-        # path = os.path.join('/tmp', dist_name)
-        
-        
-        
-        
-    #     with sr.AudioFile(path) as source:
-    #         audio = r.record(source)
-    # except Exception as e:
-    #     t = '幹音訊有問題'+test+str(e.args)+path
-    #     line_bot_api.reply_message(event.reply_token,TextSendMessage(text=t))
-    # os.remove(path)
-    # text = r.recognize_google(audio,language='zh-TW')
-    # line_bot_api.reply_message(event.reply_token,TextSendMessage(text='你的訊息是=\n'+text))
-#處理圖片
+# 處理圖片
 @handler.add(MessageEvent,message=ImageMessage)
 def handle_msg_img(event):
     profile = line_bot_api.get_profile(event.source.user_id)
     tem_name = str(profile.display_name)
-    temp=''
-    ext = 'jpg'
     img_id = 1
     t = fb.get('/pic',None)
     if t!=None:
@@ -434,14 +401,12 @@ def handle_msg_img(event):
             count+=1
     try:
         message_content = line_bot_api.get_message_content(event.message.id)
-        with tempfile.NamedTemporaryFile(prefix=ext + '-', delete=False) as tf:
+        with tempfile.NamedTemporaryFile(prefix='jpg-', delete=False) as tf:
             for chunk in message_content.iter_content():
                 tf.write(chunk)
             fb.post('/pic',{'id':str(img_id),'user':tem_name,'describe':''})
             tempfile_path = tf.name
-        dist_path = tempfile_path + '.' + ext
-        dist_name = os.path.basename(dist_path)
-        os.rename(tempfile_path,dist_path)
+        path = tempfile_path
         client = ImgurClient(client_id, client_secret, access_token, refresh_token)
         config = {
             'album': album_id,
@@ -449,68 +414,290 @@ def handle_msg_img(event):
             'title': img_id,
             'description': 'Cute kitten being cute on'
         }
-        
-        path = os.path.join('/tmp', dist_name)
-        temp='ok'
         client.upload_from_path(path, config=config, anon=False)
         os.remove(path)
         image_reply = check_pic(img_id)
         line_bot_api.reply_message(event.reply_token,[TextSendMessage(text='上傳成功'),image_reply])
-    except :
-        t = '上傳失敗dist_name'+temp
+    except  Exception as e:
+        t = '上傳失敗'+str(e.args)
         line_bot_api.reply_message(event.reply_token,TextSendMessage(text=t))
-# 處理位置:
+
 @handler.add(MessageEvent, message=LocationMessage)
-def handle_msg_locate(event):
-    temp = 'title:{}\naddress:{}\nlatitude:{}\nlongitude:{}'.format(event.message.title,event.message.address,event.message.latitude,event.message.longitude )
-    line_bot_api.reply_message(event.reply_token,TextSendMessage(text='地點在'+temp))
+def handle_location(event):
+    title = event.message.title
+    latitude = event.message.latitude
+    longitude = event.message.longitude
+    temp = 'hey guy~\ntitle={} latitude={} longitude={}'.format(title,latitude,longitude)
+    line_bot_api.reply_message(event.reply_token,TextSendMessage(text=temp))
 # 處理訊息:
 @handler.add(MessageEvent, message=TextMessage)
 def handle_msg_text(event):
-    global tem_id
-    profile = line_bot_api.get_profile(event.source.user_id)
-    tem_id = str(profile.user_id)
-    tem_name = str(profile.display_name)
     content = event.message.text  
-    save_line_id(tem_id)#儲存lineId
-    save_response(tem_name,content)#save response
-    count = 1
-    t = fb.get('/pic',None)
-    for key,value in t.items():
-        if count == len(t):#取得最後一個dict項目
-            img_id = value['id']
-        count+=1
-    if msg_hello(event,event.message.text)!=None:
-        return
-    elif event.message.text == 'where':
+    profile = line_bot_api.get_profile(event.source.user_id)
+    user_name = profile.display_name
+    picture_url = profile.picture_url
+    if event.message.text == 'where':
         message = LocationSendMessage(
         title='My CCU Lab',
-        address='國立中正大學',
+        address='中正大學',
         latitude=23.563381,
         longitude=120.4706944
         )
         line_bot_api.reply_message(event.reply_token, message)
         return
-    elif img_describe(event.message.text,img_id)!=None:
-        content = img_describe(event.message.text,img_id)
-    elif get_image(event.message.text)!=None:
-        image = get_image(event.message.text)
-        line_bot_api.reply_message(event.reply_token, image)
+    elif event.message.text == '國泰金控公司簡介':
+        t = '''公司簡介\n隨著金融產業多元化與全球化的發展,以及國內金融機構購併、整合法源之制訂,國泰金融控股股份有限公司於民國九十年十二月三十一日正式成立,登記額定資本額新台幣一千二百億元。結合保險、證券、銀行等多樣化的金融機構,國泰金控架構起一個功能完整的經營平台。藉由遍佈全省之營業據點與銷售人員,發展共同行銷 (cross-selling) 的策略,提供客戶一站購足 (one-stop shopping) 的服務。\n 
+*榮登美國富比士排名2000大企業，台灣企業排名第一名 
+*榮獲中華信用評等「twAA+」為業界之冠 
+*榮獲天下雜誌1000大企業調查，蟬聯金融業榜首*英國金融時報全球500大企業台灣區金融業第一名 
+*今周刊公佈「金控經營績效評比」中，以策略、財務、經營品質三項指標，排名金控業第一\n
+主要商品／服務項目\n
+金融（保險、銀行、證券…..）\n
+福利制度\n
+年終獎金，端午、中秋代金，婚喪禮金，生日禮物，員工保險，子女教育補助費，登山活動，春秋兩季旅遊，年終聚餐補助，國建購屋優惠。\n
+經營理念\n
+四大經營理念：\n
+1.經營腳踏實地，工作精益求精 \n
+2.注重商業道德，講究職業良心 \n
+3.重視保戶權益，負起社會責任 \n
+4.加強員工福利，兼顧股東利益 \n
+六大工作方針： \n
+1.經營效率化 \n
+2.加強各級幹部權責 \n
+3.重視各種教育訓練 \n
+4.待遇與工作合理化 \n
+5.以行動及成果證明一切 \n
+6.年年是自強年'''    
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=t))
+        return 0
+    elif event.message.text.lower() == "國泰金控工作職缺":
+        t = job_seek()
+        line_bot_api.reply_message(event.reply_token,t)
+        return 0
+    elif event.message.text.lower() == "國泰工作":
+         buttons_template = TemplateSendMessage(
+            alt_text='國泰工作template',
+            template=ButtonsTemplate(
+                title='國泰金融控股股份有限公司',
+                text='請選擇需要選項',
+                thumbnail_image_url='https://i.imgur.com/Rlbwhuy.jpg',
+                actions=[
+                    MessageTemplateAction(
+                        label='國泰金控公司簡介',
+                        text='國泰金控公司簡介'
+                    ),
+                    MessageTemplateAction(
+                        label='國泰金控工作職缺',
+                        text='國泰金控工作職缺'
+                    ),
+                ]
+            )
+        )
+         line_bot_api.reply_message(event.reply_token, buttons_template)
+         return 0
+    elif event.message.text.lower() == "eyny":
+        content = eyny_movie()
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=content))
+        return 0
+    elif google_picture(event.message.text) != None:
+        image = google_picture(event.message.text)
+        line_bot_api.reply_message(event.reply_token,image)
         return
-    elif serch_information(event.message.text)!=None:
-        content = serch_information(event.message.text)
-    elif content =='lab':
-        t = type(event.message)
-        s = type(event.message.text)
-        content = 'event='+str(t)+str(s)
-    elif fbchoose(event.message.text)!=None:
-        content = fbchoose(event.message.text)
-    elif get(event.message.text,tem_name)!=None:
-        content = get(event.message.text,tem_name)
-    elif event.message.text == "test":
-        static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
-        content = static_tmp_path
-    elif event.message.text == "隨便一張":
+    elif sister_picture(event.message.text) != None:
+        image = sister_picture(event.message.text)
+        line_bot_api.reply_message(event.reply_token,image)
+        return
+    elif event.message.text == "PanX泛科技":
+        content = panx()
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=content))
+        return 0
+    elif drink_menu(event.message.text) != None:
+        image = drink_menu(event.message.text)
+        image.append(button_template(user_name,event.message.text[:-4],'請問一下~','有想要進一步的資訊嗎?',picture_url))
+        line_bot_api.reply_message(event.reply_token,image)
+        return
+    elif event.message.text == "近期上映電影":
+        content = movie()
+        template = movie_template()
+        line_bot_api.reply_message(
+            event.reply_token,[
+                    TextSendMessage(text=content),
+                    template
+            ]
+            )
+        return 0
+    elif event.message.text.lower() == "tool":
+        Carousel_template = TemplateSendMessage(
+        alt_text='Carousel template',
+        template=CarouselTemplate(
+        columns=[
+            CarouselColumn(
+                thumbnail_image_url='https://i.imgur.com/Upw0mY5.jpg',
+                title = '功能目錄',
+                text = user_name+'我可以幫你做到下列這些喔',
+                actions=[
+                    MessageTemplateAction(
+                        label='國泰工作查詢',
+                        text= '國泰工作'
+                    ),
+                    MessageTemplateAction(
+                        label='電影資訊',
+                        text= 'movie'
+                    ),
+                    MessageTemplateAction(
+                        label='新聞資訊',
+                        text= 'news'
+                    )
+                ]
+            ),
+            CarouselColumn(
+                thumbnail_image_url='https://i.imgur.com/Upw0mY5.jpg',
+                title = '功能目錄',
+                text = user_name+'我可以幫你做到下列這些喔',
+                actions=[
+                    MessageTemplateAction(
+                        label='捷運到站資訊',
+                        text= 'MRT'
+                    ),
+                    MessageTemplateAction(
+                        label='正妹圖片',
+                        text= 'pic sister'
+                    ),
+                    MessageTemplateAction(
+                        label='資料庫裡面隨便一張照片',
+                        text= 'ramdom picture'
+                    )
+                ]
+            )
+        ]
+        )
+        )
+        line_bot_api.reply_message(event.reply_token,Carousel_template)
+        return 0
+    elif event.message.text.lower() == "mrt":
+        Carousel_template = TemplateSendMessage(
+        alt_text='Carousel template',
+        template=CarouselTemplate(
+        columns=[
+            CarouselColumn(
+                thumbnail_image_url='https://i.imgur.com/l1UuvZp.jpg',
+                title='請選擇你要到的路線終點',
+                text='此張是文湖線及板南線',
+                actions=[
+                    PostbackTemplateAction(
+                        label='南港展覽館站',
+                        data = 'T南港展覽館站'
+                    ),
+                    PostbackTemplateAction(
+                        label='動物園站',
+                        data = 'T動物園站',
+                    ),
+                    PostbackTemplateAction(
+                        label='頂埔站',
+                        data = 'T頂埔站'
+                    )
+                ]
+            ),
+            CarouselColumn(
+                thumbnail_image_url='https://i.imgur.com/l1UuvZp.jpg',
+                title='請選擇你要到的路線終點',
+                text='此張是新店線及淡水線',
+                actions=[
+                    PostbackTemplateAction(
+                        label='新店站',
+                        data = 'T新店站'
+                    ),
+                    PostbackTemplateAction(
+                        label='松山站',
+                        data = 'T松山站'
+                    ),
+                    PostbackTemplateAction(
+                        label='象山站',
+                        data = 'T象山站'
+                    )
+                ]
+            ),
+            CarouselColumn(
+                thumbnail_image_url='https://i.imgur.com/l1UuvZp.jpg',
+                title='請選擇你要到的路線終點',
+                text='此張是淡水線及蘆洲線',
+                actions=[
+                    PostbackTemplateAction(
+                        label='淡水站',
+                        data = 'T淡水站'
+                    ),
+                    PostbackTemplateAction(
+                        label='北投站',
+                        data = 'T北投站'
+                    ),
+                    PostbackTemplateAction(
+                        label='蘆洲站',
+                        data = 'T蘆洲站'
+                    )
+                ]
+            ),
+            CarouselColumn(
+                thumbnail_image_url='https://i.imgur.com/l1UuvZp.jpg',
+                title='請選擇你要到的路線終點',
+                text='此張是迴龍蘆洲',
+                actions=[
+                    PostbackTemplateAction(
+                        label='南勢角站',
+                        data = 'T南勢角站'
+                    ),
+                    PostbackTemplateAction(
+                        label='迴龍站',
+                        data = 'T迴龍站'
+                    ),
+                    PostbackTemplateAction(
+                        label='台電大樓站',
+                        data = 'T台電大樓站'
+                    )
+                ]
+            )
+        ]
+    )
+    )
+        line_bot_api.reply_message(event.reply_token,Carousel_template)
+        return 0
+    elif event.message.text == "Marco體驗師":
+        target_url = 'https://www.youtube.com/channel/UCQTIdBx41To9Gg42aGEO0gQ/videos'
+        rs = requests.session()
+        res = rs.get(target_url, verify=False)
+        soup = bf(res.text, 'html.parser')
+        template = movie_template()
+        seqs = ['https://www.youtube.com{}'.format(data.find('a')['href']) for data in soup.select('.yt-lockup-title')]
+        line_bot_api.reply_message(
+            event.reply_token, [
+                TextSendMessage(text=seqs[random.randint(0, len(seqs) - 1)]),
+                TextSendMessage(text=seqs[random.randint(0, len(seqs) - 1)]),
+                TextSendMessage(text=seqs[random.randint(0, len(seqs) - 1)]),
+                TextSendMessage(text=seqs[random.randint(0, len(seqs) - 1)]),
+                template
+            ])
+        return 0
+    elif event.message.text == "觸電網-youtube":
+        target_url = 'https://www.youtube.com/user/truemovie1/videos'
+        rs = requests.session()
+        res = rs.get(target_url, verify=False)
+        soup = bf(res.text, 'html.parser')
+        seqs = ['https://www.youtube.com{}'.format(data.find('a')['href']) for data in soup.select('.yt-lockup-title')]
+        template = movie_template()
+        line_bot_api.reply_message(
+            event.reply_token, [
+                TextSendMessage(text=seqs[random.randint(0, len(seqs) - 1)]),
+                TextSendMessage(text=seqs[random.randint(0, len(seqs) - 1)]),
+                TextSendMessage(text=seqs[random.randint(0, len(seqs) - 1)]),
+                template
+            ])
+        return 0
+    elif event.message.text.lower() == "ramdom picture":
         client = ImgurClient(client_id, client_secret)
         images = client.get_album_images(album_id)
         index = random.randint(0, len(images) - 1)
@@ -521,86 +708,61 @@ def handle_msg_text(event):
         )
         line_bot_api.reply_message(event.reply_token,image_message)
         return
-    elif event.message.text == 'profile':
-        if isinstance(event.source, SourceUser):
-            profile = line_bot_api.get_profile(event.source.user_id)
-            line_bot_api.reply_message(
-                event.reply_token, [
-                    TextSendMessage(text='Display name: ' + str(profile.display_name)),
-                    TextSendMessage(text='Status message: ' + str(profile.status_message))
+    elif event.message.text.lower() == "妹妹":
+        url = 'https://i.imgur.com/J5m2pm7.jpg'
+        image_message = ImageSendMessage(
+            original_content_url=url,
+            preview_image_url=url
+        )
+        line_bot_api.reply_message(event.reply_token,image_message)
+        return
+    elif event.message.text.lower() == "movie":
+        buttons_template = movie_template()
+        line_bot_api.reply_message(event.reply_token, buttons_template)
+        return 0
+    elif event.message.text == "蘋果即時新聞":
+        content = apple_news()
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=content))
+        return 0
+    elif event.message.text.lower() == "news":
+        buttons_template = TemplateSendMessage(
+            alt_text='news template',
+            template=ButtonsTemplate(
+                title='新聞類型',
+                text='請選擇',
+                thumbnail_image_url='https://i.imgur.com/GoAYFqv.jpg',
+                actions=[
+                    MessageTemplateAction(
+                        label='蘋果即時新聞',
+                        text='蘋果即時新聞'
+                    ),
+                    MessageTemplateAction(
+                        label='天下雜誌',
+                        text='天下雜誌'
+                    ),
+                    MessageTemplateAction(
+                        label='PanX泛科技',
+                        text='PanX泛科技'
+                    )
                 ]
             )
-        return
-    elif event.message.text == 'menu':#event,title,text,image_url,act1,act2,act3,act3_uri,act4,act4_uri
-        buttons_template(event,'請假系統','歡迎來到請假系統，請選擇一項','https://i.imgur.com/fsIKoMX.jpg','老師請假','學生請假','電話洽詢','tel://0930288038','分享帳號','line://nv/recommendOA/@pqv5799k')
-        return
-        # tenplate_menu = TemplateSendMessage(
-        #         alt_text='This is Template',
-        #         template = ButtonsTemplate(
-        #             title='Menu',
-        #             text = 'please choose one',
-        #             thumbnail_image_url='https://i.imgur.com/bR81VQj.jpg',
-        #             actions=[
-        #                 PostbackTemplateAction(
-        #                     label = '病假',
-        #                     # text = '病假',
-        #                     data = 'action=buy&itemid=1'
-        #                 ),
-        #                 MessageTemplateAction(
-        #                     label = '事假',
-        #                     text = '事假'
-        #                 ),
-        #                 URITemplateAction(
-        #                     label = '電話',
-        #                     uri = 'tel://12345678'
-        #                 ),
-        #                 URITemplateAction(
-        #                     label = '分享這帳號',
-        #                     uri = 'line://nv/recommendOA/@pqv5799k'
-        #                 )
-        #             ]
-        #         )
-        # )
-        # line_bot_api.reply_message(event.reply_token,tenplate_menu)
-        # return
-    else:
-        reword = ['安靜啦 乾','去找你妹','請問沛?','不要跟我耍嘴砲','在嘴阿','小楊是育成高中','我覺得有道理','你在說泰語','別靠北','在嗆阿','你在恭殺小啦','怎樣?','請注意你說話','高潮你妹啦','在說人話嗎?','管你?','你知道林北是誰嗎','閉嘴']
-        r = random.randint(0,17)
-        n = len(reword[r])
-        t =  quote(reword[r])
-        stream_url = 'https://google-translate-proxy.herokuapp.com/api/tts?query='+t+'&language=zh-tw'
-        message = AudioSendMessage(
-            original_content_url = stream_url,
-            duration=n*400#千分之一秒
         )
-        line_bot_api.reply_message(event.reply_token,message)
-        return
-#    elif event.message.text == "template":    
-#        Confirm_template = TemplateSendMessage(
-#        alt_text='目錄 template',
-#        template=ConfirmTemplate(
-#            title='這是Template',
-#            text='這就是ConfirmTemplate,用於兩種按鈕選擇',
-#            actions=[                              
-#                PostbackTemplateAction(
-#                    label='Y',
-#                    text='Y',
-#                    data='action=buy&itemid=1'
-#                ),
-#                MessageTemplateAction(
-#                    label='N',
-#                    text='I choose N'
-#                )
-#            ]
-#        )
-#        )
-#        line_bot_api.reply_message(event.reply_token,Confirm_template)
-    
+        line_bot_api.reply_message(event.reply_token, buttons_template)
+        return 0
+    elif event.message.text == "天下雜誌":
+        content = magazine()
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=content))
+        return 0
+    elif event.message.text == "test":
+        static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
+        content = static_tmp_path
+
     message = TextSendMessage(text=content)
     line_bot_api.reply_message(event.reply_token,message)
-#image_url = "https://i.imgur.com/k8v9RiM.jpg"
-#line_bot_api.push_message(tem_id, ImageSendMessage(original_content_url=image_url, preview_image_url=image_url))
-import os
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
