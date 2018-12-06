@@ -7,7 +7,7 @@ LINE BOT by cuu411
 下圖是跑了幾百次一直都出現例外(exception)，包括了上面講的ffmpeg問題，還有一部分是我路徑沒設好
 步驟:
 
-ㄧ.先在heroku的buildpack中加入 https://github.com/alevfalse/heroku-buildpack-ffmpeg\
+ㄧ.先在heroku的buildpack中加入 https://github.com/alevfalse/heroku-buildpack-ffmpeg\n
 二.再把程式push到heroku上面(git push heroku master -f)後，可以用指令看ffmpeg有沒有建立在heroku上面，指令是heroku run "ffmpeg -version"，接著進入bash看ffmpeg的位置在heroku的哪裡，因為要給AudioSegment.converter來指定ffmpeg位置，用指令heroku run bash就可以進入bash殼了，在輸入指令which ffmpeg，這時ㄧ般正常的話就會回應給你ffmpeg的位置，如下圖這樣子，他給我的ffmpeg的位置在(/app/vendor/ffmpeg/ffmpeg)裡面
 三.知道了位置我們就可以在python裡面做手腳了，
 參考:
