@@ -19,33 +19,32 @@ https://github.com/integricho/heroku-buildpack-python-ffmpeg.git
 https://hk.saowen.com/a/4e1f6599b0c03d19d8945f9cc23a7bc313b638d9d134d8bd335db9B     
 Heroku 上使用 webdriver 爬蟲抓資料
 ====
+
 問題:
 -------  
+
 利用selenium模組的 webdriver來進行爬蟲，但webdriver在heroku上面不支援，必須要靠buildpack來幫忙處理，主要問題是使用網路上爬文來的資料說xvfb-google-chrome這個buildpack在heroku-16 stack並不相容
 
 解決
 -------  
+
 所以要解決的話有兩個辦法，一個是把現在的stack 轉為 heroku-14 stack，另外一個是再找其他的buildpack，我就使用轉為heroku-14 stack這個方法，因為最近再寫的linebot想進行些更進階的爬蟲，必須要動態抓取網頁程式碼，所以就不得以要用到selenium模組的 webdriver方法來幫忙，其實我是想要爬GOOGLE圖片搜尋時，抓到圖片的實際位置而且網址最後一個是以.jpg結尾，來幫我完成一些事情，下面是我片段的程式碼，這次也搞了一個多禮拜才解決，但也越來越熟悉了。
 
 參考:
 ------- 
+
 heroku的webdriver 使用說明---------->https://devcenter.heroku.com/articles/heroku-ci#known-issues    
 heroku的轉換webdriver 使用說明----->https://devcenter.heroku.com/articles/cedar-14-stack   
 需要架在heroku上面的buildpack和變數設定
 需要加入的兩個buildpack分別是如下兩個:
 ------- 
+
 1.https://github.com/heroku/heroku-buildpack-chromedriver   
 2.https://github.com/heroku/heroku-buildpack-xvfb-google-chrome   
 需要加入的環境變數為如下兩個:
 ------- 
+
 1.CHROMEDRIVER_PATH---->/app/.chromedriver/bin/chromedriver   
 2.GOOGLE_CHROME_BIN--->/app/.apt/usr/bin/google-chrome    
 最後還需要再requirement.txt檔加上selenium==3.8.0，這邊搞了我很久，一開始沒打上版本，會很不穩定常常崩潰，爬文爬到說一定要指定selenium==3.8.0，因為這個版本的selenium是最穩定的樣子
-
-
-
-
-
-
-
 
