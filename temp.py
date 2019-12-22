@@ -445,58 +445,7 @@ def handle_msg_text(event):
         )
         line_bot_api.reply_message(event.reply_token, message)
         return
-    elif event.message.text == '國泰金控公司簡介':
-        t = '''公司簡介\n隨著金融產業多元化與全球化的發展,以及國內金融機構購併、整合法源之制訂,國泰金融控股股份有限公司於民國九十年十二月三十一日正式成立,登記額定資本額新台幣一千二百億元。結合保險、證券、銀行等多樣化的金融機構,國泰金控架構起一個功能完整的經營平台。藉由遍佈全省之營業據點與銷售人員,發展共同行銷 (cross-selling) 的策略,提供客戶一站購足 (one-stop shopping) 的服務。\n 
-*榮登美國富比士排名2000大企業，台灣企業排名第一名 
-*榮獲中華信用評等「twAA+」為業界之冠 
-*榮獲天下雜誌1000大企業調查，蟬聯金融業榜首*英國金融時報全球500大企業台灣區金融業第一名 
-*今周刊公佈「金控經營績效評比」中，以策略、財務、經營品質三項指標，排名金控業第一\n
-主要商品／服務項目\n
-金融（保險、銀行、證券…..）\n
-福利制度\n
-年終獎金，端午、中秋代金，婚喪禮金，生日禮物，員工保險，子女教育補助費，登山活動，春秋兩季旅遊，年終聚餐補助，國建購屋優惠。\n
-經營理念\n
-四大經營理念：\n
-1.經營腳踏實地，工作精益求精 \n
-2.注重商業道德，講究職業良心 \n
-3.重視保戶權益，負起社會責任 \n
-4.加強員工福利，兼顧股東利益 \n
-六大工作方針： \n
-1.經營效率化 \n
-2.加強各級幹部權責 \n
-3.重視各種教育訓練 \n
-4.待遇與工作合理化 \n
-5.以行動及成果證明一切 \n
-6.年年是自強年'''    
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=t))
-        return 0
-    elif event.message.text.lower() == "國泰金控工作職缺":
-        t = job_seek()
-        line_bot_api.reply_message(event.reply_token,t)
-        return 0
-    elif event.message.text.lower() == "國泰工作":
-         buttons_template = TemplateSendMessage(
-            alt_text='國泰工作template',
-            template=ButtonsTemplate(
-                title='國泰金融控股股份有限公司',
-                text='請選擇需要選項',
-                thumbnail_image_url='https://i.imgur.com/Rlbwhuy.jpg',
-                actions=[
-                    MessageTemplateAction(
-                        label='國泰金控公司簡介',
-                        text='國泰金控公司簡介'
-                    ),
-                    MessageTemplateAction(
-                        label='國泰金控工作職缺',
-                        text='國泰金控工作職缺'
-                    ),
-                ]
-            )
-        )
-         line_bot_api.reply_message(event.reply_token, buttons_template)
-         return 0
+
     elif event.message.text.lower() == "eyny":
         content = eyny_movie()
         line_bot_api.reply_message(
@@ -555,117 +504,13 @@ def handle_msg_text(event):
                         text= 'news'
                     )
                 ]
-            ),
-            CarouselColumn(
-                thumbnail_image_url='https://i.imgur.com/Upw0mY5.jpg',
-                title = '功能目錄',
-                text = user_name+'我可以幫你做到下列這些喔',
-                actions=[
-                    MessageTemplateAction(
-                        label='捷運到站資訊',
-                        text= 'MRT'
-                    ),
-                    MessageTemplateAction(
-                        label='正妹圖片',
-                        text= 'pic sister'
-                    ),
-                    MessageTemplateAction(
-                        label='資料庫裡面隨便一張照片',
-                        text= 'ramdom picture'
-                    )
-                ]
             )
         ]
         )
         )
         line_bot_api.reply_message(event.reply_token,Carousel_template)
         return 0
-    elif event.message.text.lower() == "mrt":
-        Carousel_template = TemplateSendMessage(
-        alt_text='Carousel template',
-        template=CarouselTemplate(
-        columns=[
-            CarouselColumn(
-                thumbnail_image_url='https://i.imgur.com/l1UuvZp.jpg',
-                title='請選擇你要到的路線終點',
-                text='此張是文湖線及板南線',
-                actions=[
-                    PostbackTemplateAction(
-                        label='南港展覽館站',
-                        data = 'T南港展覽館站'
-                    ),
-                    PostbackTemplateAction(
-                        label='動物園站',
-                        data = 'T動物園站',
-                    ),
-                    PostbackTemplateAction(
-                        label='頂埔站',
-                        data = 'T頂埔站'
-                    )
-                ]
-            ),
-            CarouselColumn(
-                thumbnail_image_url='https://i.imgur.com/l1UuvZp.jpg',
-                title='請選擇你要到的路線終點',
-                text='此張是新店線及淡水線',
-                actions=[
-                    PostbackTemplateAction(
-                        label='新店站',
-                        data = 'T新店站'
-                    ),
-                    PostbackTemplateAction(
-                        label='松山站',
-                        data = 'T松山站'
-                    ),
-                    PostbackTemplateAction(
-                        label='象山站',
-                        data = 'T象山站'
-                    )
-                ]
-            ),
-            CarouselColumn(
-                thumbnail_image_url='https://i.imgur.com/l1UuvZp.jpg',
-                title='請選擇你要到的路線終點',
-                text='此張是淡水線及蘆洲線',
-                actions=[
-                    PostbackTemplateAction(
-                        label='淡水站',
-                        data = 'T淡水站'
-                    ),
-                    PostbackTemplateAction(
-                        label='北投站',
-                        data = 'T北投站'
-                    ),
-                    PostbackTemplateAction(
-                        label='蘆洲站',
-                        data = 'T蘆洲站'
-                    )
-                ]
-            ),
-            CarouselColumn(
-                thumbnail_image_url='https://i.imgur.com/l1UuvZp.jpg',
-                title='請選擇你要到的路線終點',
-                text='此張是迴龍蘆洲',
-                actions=[
-                    PostbackTemplateAction(
-                        label='南勢角站',
-                        data = 'T南勢角站'
-                    ),
-                    PostbackTemplateAction(
-                        label='迴龍站',
-                        data = 'T迴龍站'
-                    ),
-                    PostbackTemplateAction(
-                        label='台電大樓站',
-                        data = 'T台電大樓站'
-                    )
-                ]
-            )
-        ]
-    )
-    )
-        line_bot_api.reply_message(event.reply_token,Carousel_template)
-        return 0
+
     elif event.message.text == "Marco體驗師":
         target_url = 'https://www.youtube.com/channel/UCQTIdBx41To9Gg42aGEO0gQ/videos'
         rs = requests.session()
@@ -708,14 +553,7 @@ def handle_msg_text(event):
         )
         line_bot_api.reply_message(event.reply_token,image_message)
         return
-    elif event.message.text.lower() == "妹妹":
-        url = 'https://i.imgur.com/J5m2pm7.jpg'
-        image_message = ImageSendMessage(
-            original_content_url=url,
-            preview_image_url=url
-        )
-        line_bot_api.reply_message(event.reply_token,image_message)
-        return
+
     elif event.message.text.lower() == "movie":
         buttons_template = movie_template()
         line_bot_api.reply_message(event.reply_token, buttons_template)
