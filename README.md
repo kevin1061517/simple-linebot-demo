@@ -18,7 +18,7 @@ https://github.com/integricho/heroku-buildpack-python-ffmpeg.git
 
 https://hk.saowen.com/a/4e1f6599b0c03d19d8945f9cc23a7bc313b638d9d134d8bd335db9B    
 
-Heroku 上使用 webdriver 爬蟲抓資料
+## Heroku 上使用 webdriver 爬蟲抓資料
 ====
 
 ### 問題:
@@ -37,15 +37,15 @@ Heroku 上使用 webdriver 爬蟲抓資料
 heroku的webdriver 使用說明---------->https://devcenter.heroku.com/articles/heroku-ci#known-issues    
 heroku的轉換webdriver 使用說明----->https://devcenter.heroku.com/articles/cedar-14-stack   
 
-需要架在heroku上面的buildpack和變數設定
+## 需要架在heroku上面的buildpack和變數設定
 ====
-需要加入的兩個buildpack分別是如下兩個:
+### 需要加入的兩個buildpack分別是如下兩個:
 ------- 
 
 1.https://github.com/heroku/heroku-buildpack-chromedriver   
 2.https://github.com/heroku/heroku-buildpack-xvfb-google-chrome   
 
-需要加入的環境變數為如下兩個:
+### 需要加入的環境變數為如下兩個:
 ------- 
 1.CHROMEDRIVER_PATH---->/app/.chromedriver/bin/chromedriver   
 2.GOOGLE_CHROME_BIN--->/app/.apt/usr/bin/google-chrome    
