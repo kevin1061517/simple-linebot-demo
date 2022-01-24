@@ -6,21 +6,19 @@
 
 ### 步驟: 
 ------- 
-一.先在heroku的buildpack中加入 https://github.com/alevfalse/heroku-buildpack-ffmpeg    
-二.再把程式push到heroku上面(git push heroku master -f)後，可以用指令看ffmpeg有沒有建立在heroku上面，指令是heroku run "ffmpeg -version"，接著進入bash看ffmpeg的位置在heroku的哪裡，因為要給AudioSegment.converter來指定ffmpeg位置，用指令heroku run bash就可以進入bash殼了，在輸入指令which ffmpeg，這時ㄧ般正常的話就會回應給你ffmpeg的位置，如下圖這樣子，他給我的ffmpeg的位置在(/app/vendor/ffmpeg/ffmpeg)裡面
-三.知道了位置我們就可以在python裡面做手腳了
+1. 先在heroku的buildpack中加入 https://github.com/alevfalse/heroku-buildpack-ffmpeg    
+2. 再把程式push到heroku上面(git push heroku master -f)後，可以用指令看ffmpeg有沒有建立在heroku上面，指令是heroku run "ffmpeg -version"，接著進入bash看ffmpeg的位置在heroku的哪裡，因為要給AudioSegment.converter來指定ffmpeg位置，用指令heroku run bash就可以進入bash殼了，在輸入指令which ffmpeg，這時ㄧ般正常的話就會回應給你ffmpeg的位置，如下圖這樣子，他給我的ffmpeg的位置在(/app/vendor/ffmpeg/ffmpeg)裡面
+3. 知道了位置我們就可以在python裡面做手腳了
 
 ### 參考:
 -------  
-https://stackoverflow.com/questions/26477786/reading-in-pydub-audiosegment-from-url-bytesio-returning-oserror-errno-2-no
+* https://stackoverflow.com/questions/26477786/reading-in-pydub-audiosegment-from-url-bytesio-returning-oserror-errno-2-no
 
-https://github.com/integricho/heroku-buildpack-python-ffmpeg.git
+* https://github.com/integricho/heroku-buildpack-python-ffmpeg.git
 
-https://hk.saowen.com/a/4e1f6599b0c03d19d8945f9cc23a7bc313b638d9d134d8bd335db9B    
+* https://hk.saowen.com/a/4e1f6599b0c03d19d8945f9cc23a7bc313b638d9d134d8bd335db9B    
 
 ## Heroku 上使用 webdriver 爬蟲抓資料
-====
-
 ### 問題:
 -------  
 
@@ -34,20 +32,24 @@ https://hk.saowen.com/a/4e1f6599b0c03d19d8945f9cc23a7bc313b638d9d134d8bd335db9B
 ### 參考:
 ------- 
 
-heroku的webdriver 使用說明---------->https://devcenter.heroku.com/articles/heroku-ci#known-issues    
-heroku的轉換webdriver 使用說明----->https://devcenter.heroku.com/articles/cedar-14-stack   
+* heroku的webdriver 使用說明
+  * https://devcenter.heroku.com/articles/heroku-ci#known-issues    
+ 
+* heroku的轉換webdriver 使用說明
+  * https://devcenter.heroku.com/articles/cedar-14-stack   
 
 ## 需要架在heroku上面的buildpack和變數設定
-====
 ### 需要加入的兩個buildpack分別是如下兩個:
 ------- 
 
-1.https://github.com/heroku/heroku-buildpack-chromedriver   
-2.https://github.com/heroku/heroku-buildpack-xvfb-google-chrome   
+1. https://github.com/heroku/heroku-buildpack-chromedriver   
+2. https://github.com/heroku/heroku-buildpack-xvfb-google-chrome   
 
 ### 需要加入的環境變數為如下兩個:
 ------- 
-1.CHROMEDRIVER_PATH---->/app/.chromedriver/bin/chromedriver   
-2.GOOGLE_CHROME_BIN--->/app/.apt/usr/bin/google-chrome    
-最後還需要再requirement.txt檔加上selenium==3.8.0，這邊搞了我很久，一開始沒打上版本，會很不穩定常常崩潰，爬文爬到說一定要指定selenium==3.8.0，因為這個版本的selenium是最穩定的樣子
+* CHROMEDRIVER_PATH
+  * /app/.chromedriver/bin/chromedriver   
+* GOOGLE_CHROME_BIN
+  * /app/.apt/usr/bin/google-chrome    
+  * 最後還需要再requirement.txt檔加上selenium==3.8.0，這邊搞了我很久，一開始沒打上版本，會很不穩定常常崩潰，爬文爬到說一定要指定selenium==3.8.0，因為這個版本的selenium是最穩定的樣子
 
